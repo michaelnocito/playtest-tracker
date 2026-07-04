@@ -43,9 +43,17 @@
   button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
     outline:none;box-shadow:0 0 0 3px rgba(197,81,31,0.28);border-color:var(--accent)}
   h1,h2,h3{margin:0 0 8px;font-family:var(--font-display);font-weight:600;letter-spacing:-0.01em}
-  #app{display:grid;grid-template-columns:280px 1fr;grid-template-rows:auto 1fr;height:100vh}
+  #app{display:grid;grid-template-columns:280px 1fr;grid-template-rows:auto auto 1fr;height:100vh}
   #topbar{grid-column:1/3;display:flex;align-items:center;gap:10px;padding:12px 20px;
-    background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;box-shadow:var(--shadow)}
+    background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;box-shadow:var(--shadow);z-index:2}
+  #howstrip{grid-column:1/3;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 20px;background:var(--info-soft,#DFEDEC);border-bottom:1px solid var(--line);
+    font-size:13px;color:var(--muted);line-height:1.4}
+  #howstrip .dir{font-weight:600;color:var(--info)}
+  #howstrip b{color:var(--text)}
+  #howstrip .sep{color:var(--stone-300)}
+  #howstrip #howClose{margin-left:auto;background:none;border:none;color:var(--subtle);padding:2px 8px}
+  #howstrip.hidden{display:none}
   #topbar h1{font-size:19px;color:var(--accent);margin:0 14px 0 0;font-weight:700;
     display:flex;align-items:center;gap:8px}
   #topbar h1::before{content:'';width:22px;height:22px;border-radius:6px;background:var(--accent);
@@ -65,7 +73,8 @@
   .passTitle{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--accent);
     border-bottom:2px solid var(--line);padding-bottom:6px;margin-bottom:10px}
   .item{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
-  .item .txt{flex:1;padding-top:6px}
+  .item .txt{flex:1;padding-top:6px;font-weight:500;color:var(--text)}
+  .item .how{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.45}
   .statusBtn{width:100px;text-align:center;font-size:12px;font-weight:600;flex-shrink:0;letter-spacing:0.02em}
   .statusBtn.untested{background:var(--sunken);color:var(--subtle);border-color:var(--line)}
   .statusBtn.pass{background:var(--good-soft);color:var(--good);border-color:var(--good)}
@@ -116,20 +125,33 @@
     <h1>Playtest Tracker</h1>
     <select id="gameSel"></select>
     <button id="newGameBtn">+ new game</button>
-    <button id="pullBtn" title="Re-fetch data/&lt;game&gt;.json from this repo — picks up anything Claude committed in a chat">⭯ Pull latest</button>
+    <button id="pullBtn" title="Grab the latest — picks up anything Claude updated in a chat">⭯ Get updates from Claude</button>
     <span id="pullStatus" class="hint" style="margin:0"></span>
     <span style="width:1px;height:20px;background:var(--line)"></span>
-    <input id="buildInput" placeholder="build / task # (e.g. JF-#038)" style="width:220px">
-    <button id="newRunBtn" class="btn-primary">Start New Run</button>
+    <input id="buildInput" placeholder="build / version (e.g. JF-#038)" style="width:200px">
+    <button id="newRunBtn" class="btn-primary">Start New Test</button>
     <span style="flex:1"></span>
-    <button id="exportBtn">Export JSON</button>
-    <button id="exportMdBtn">Export run as Markdown</button>
-    <label style="border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:14px;font-weight:500">
-      Import JSON <input id="importInput" type="file" accept="application/json" style="display:none">
-    </label>
+    <details id="backupMenu" style="position:relative">
+      <summary style="list-style:none;cursor:pointer;padding:7px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--muted)">backup ▾</summary>
+      <div style="position:absolute;right:0;top:38px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;box-shadow:var(--shadow);z-index:5;display:flex;flex-direction:column;gap:8px;width:210px">
+        <div class="hint" style="margin:0">Only needed if you want a file copy — normal use is just talking to Claude.</div>
+        <button id="exportBtn">Save all data (JSON)</button>
+        <button id="exportMdBtn">Save this test (Markdown)</button>
+        <label style="border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:14px;font-weight:500;text-align:center">
+          Load a JSON file <input id="importInput" type="file" accept="application/json" style="display:none">
+        </label>
+      </div>
+    </details>
+  </div>
+  <div id="howstrip">
+    <b>How this works —</b>
+    <span><span class="dir">Claude → you:</span> when you ask Claude to log feedback, it saves here. Hit <b>“Get updates from Claude”</b> (or just reload) to see it.</span>
+    <span class="sep">·</span>
+    <span><span class="dir">You → Claude:</span> played something and want it tracked? Just tell Claude in chat. Or tap <b>“Copy for Claude”</b> on a test and paste it into chat.</span>
+    <button id="howClose" title="hide">✕</button>
   </div>
   <div id="sidebar">
-    <h3 style="color:var(--muted);font-size:12px;letter-spacing:1px">RUN HISTORY</h3>
+    <h3>Games / tests</h3>
     <div id="runList"></div>
   </div>
   <div id="main"></div>
@@ -139,47 +161,53 @@
 const KEY = 'ptt_state_v1';
 
 // Seeded from PLAYTEST_CHECKLIST.md — generic, game-agnostic; editable per game.
+// Each item is { t: short title, h: plain-English "how to check + what a pass
+// looks like" } so you never have to decode QA jargon. Passes are ordered
+// from "do every build" to "only before you submit".
 const DEFAULT_SUITE = [
-  { pass: 'Pass 1 — Smoke test', items: [
-    'Loads with no console errors',
-    'Reaches gameplay in ≤1 input from load',
-    'Core loop reachable and completes one full cycle',
-    'Restart/retry works',
-    'Audio plays, mute works',
-    'No crash, no stuck states, no infinite loading',
+  { pass: '1. Quick check — do this every build', items: [
+    { t: 'Nothing is broken when it opens', h: 'Open the game. It should show up normally — no error pop-ups, no blank/black screen.' },
+    { t: 'You get to play fast', h: 'From the page loading, it should take one click or tap (or none) to actually be playing. No menus in the way.' },
+    { t: 'You can finish one whole round', h: 'Play a complete run/level/match from start to finish without getting stuck.' },
+    { t: 'Starting over works', h: 'After you finish or lose, you can cleanly start again.' },
+    { t: 'Sound plays and mute works', h: 'You can hear audio, and pressing mute actually silences it.' },
+    { t: 'Nothing freezes or traps you', h: 'No hanging, no forever-loading, no screen you can’t get out of.' },
   ]},
-  { pass: 'Pass 2 — Cold / first-time-user test', items: [
-    'Played with zero prior context / instructions',
-    'No "wait, what do I do?" moments (or noted below if any)',
-    'Every action attempted was handled gracefully',
-    'Always clear: what to do now / what I just did / what’s next',
+  { pass: '2. First-timer test — do this when something is new', items: [
+    { t: 'Playable with zero instructions', h: 'Pretend you’ve never seen it. Can you work out what to do just by looking at the screen?' },
+    { t: 'No “wait… what do I do?” moments', h: 'Write down anywhere you got confused. That’s a spot to fix — it’s not you being slow.' },
+    { t: 'It survives weird inputs', h: 'Try things it might not expect — spam buttons, tap random spots. It shouldn’t break.' },
+    { t: 'You always know where you are', h: 'At any moment you can tell: what to do now, what you just did, and what’s coming next.' },
   ]},
-  { pass: 'Pass 3 — Systematic feature pass', items: [
-    'Every menu screen: every control does what its label says',
-    'Every input method reaches every action (keyboard/touch/controller)',
-    'Every currency/progression system: earn it, spend it, see it update',
-    'Every save/load path: close and reopen, state survives correctly',
-    'Edge states checked: 0 of something, max of something, first vs Nth time',
-    'Checked at min and max supported resolution/aspect ratio',
+  { pass: '3. Check every feature — the thorough pass', items: [
+    { t: 'Every button does what it says', h: 'Click each button/menu item. It should do exactly what its label promises.' },
+    { t: 'All the control types work', h: 'Try keyboard, mouse/touch, and controller (if supported). Each should reach every action.' },
+    { t: 'Points/coins/progress add up right', h: 'Earn some, spend some. Check the numbers change correctly and don’t glitch.' },
+    { t: 'Your progress saves', h: 'Close the game and reopen it. Whatever you unlocked or earned should still be there.' },
+    { t: 'The extremes behave', h: 'Check the edges: having zero of something, the maximum, and the very first time vs. later times.' },
+    { t: 'Looks right at any size', h: 'Resize the window and try a phone-shaped screen. Nothing should overflow or get cut off.' },
   ]},
-  { pass: 'Pass 4 — Balance / fun pass', items: [
-    'Played 3–5 full sessions back to back',
-    'No unfair difficulty spikes found (or noted below)',
-    'No boring/repetitive stretch found (or noted below)',
-    'Would play a 4th/5th run — yes/no + why (note below)',
-    'Rated 1-5: fun / fair / clear / would-recommend (note below)',
+  { pass: '4. Is it fun and fair? — play a few rounds', items: [
+    { t: 'Played a few rounds back to back', h: 'Do 3–5 full sessions in a row so you feel the real rhythm, not just one lucky or unlucky run.' },
+    { t: 'Difficulty feels fair', h: 'Note any moment that felt cheap or unfairly hard, and roughly where it happened.' },
+    { t: 'It never got boring', h: 'Note any stretch that dragged or felt repetitive. Boredom counts as a real problem here.' },
+    { t: 'You’d actually play again', h: 'Would you start a 4th or 5th round? Jot down why or why not — that answer matters most.' },
+    { t: 'Quick gut rating (1–5)', h: 'Rate fun / fair / clear / would-recommend, each 1–5. Do it each build so you can see the trend.' },
   ]},
-  { pass: 'Pass 5 — Platform compliance pass', items: [
-    'Re-ran the platform’s own requirements checklist top to bottom',
-    'Tested on actual target device classes, not just desktop',
-    'Tested failure paths: adblock on, slow network, background tab, orientation change',
+  { pass: '5. Ready for the store — do this before you submit', items: [
+    { t: 'Meets the platform’s rules', h: 'Run the platform’s own checklist. For CrazyGames that’s GAME_BIBLE.md in the play-area repo.' },
+    { t: 'Tested on real devices', h: 'Not just your desktop browser — try it on an actual phone and/or tablet.' },
+    { t: 'Handles bad conditions', h: 'Try it with an ad-blocker on, slow internet, a backgrounded tab, and rotating the phone.' },
   ]},
-  { pass: 'Pass 6 — Regression pass', items: [
-    'Re-tested everything touching the same system as the latest fix',
-    'Re-ran the smoke test (Pass 1) in full',
-    'Re-tested every caller of any shared/adapter code that changed',
+  { pass: '6. Did a fix break anything? — do this after fixing bugs', items: [
+    { t: 'Re-tested around the fix', h: 'Re-check everything near what you changed, not only the one bug you were chasing.' },
+    { t: 'Re-ran the quick check', h: 'Do pass 1 again fully. A fix that breaks the basics is worse than the bug it fixed.' },
+    { t: 'Checked things that share code', h: 'If you changed something lots of features rely on, test all of those features, not just one.' },
   ]},
 ];
+// items may be a legacy plain string or the {t,h} shape — read both safely
+function itemTitle(it){ return typeof it === 'string' ? it : it.t; }
+function itemHow(it){ return typeof it === 'string' ? '' : (it.h || ''); }
 
 function load(){
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.games) return s; } catch(e){}
@@ -297,8 +325,8 @@ function tallyResults(run){
 function renderMain(){
   const main = document.getElementById('main');
   const g = currentGame(); const run = currentRun();
-  if (!g){ main.innerHTML = '<div class="hint">Create or select a game above to get started.</div>'; return; }
-  if (!run){ main.innerHTML = '<div class="hint">No run yet for this game — click "Start New Run" above.</div>'; return; }
+  if (!g){ main.innerHTML = '<div class="hint">Pick or add a game up top to get started.</div>'; return; }
+  if (!run){ main.innerHTML = '<div class="hint">No test yet for this game — type a build/version up top and click <b>Start New Test</b>. Or just tell Claude in chat what you want tested.</div>'; return; }
 
   const counts = tallyResults(run);
   let html = `<div class="summary">
@@ -308,6 +336,8 @@ function renderMain(){
     <span class="pill b">✗ ${counts.fail} fail</span>
     <span class="pill w">⛔ ${counts.blocked} blocked</span>
     <span class="pill">${counts.untested} untested</span>
+    <span style="flex:1"></span>
+    <button id="copyClaudeBtn" class="btn-primary" title="Copies a message you can paste straight into a Claude chat">💬 Copy for Claude</button>
   </div>
   <div class="tabs">
     <button data-tab="checklist" class="${activeTab==='checklist'?'active':''}">Checklist</button>
@@ -321,11 +351,13 @@ function renderMain(){
       p.items.forEach((it, ii) => {
         const id = itemId(pi, ii);
         const r = run.results[id] || { status: 'untested', note: '' };
+        const how = itemHow(it);
         html += `<div class="item">
           <button class="statusBtn ${r.status}" data-id="${id}">${r.status.toUpperCase()}</button>
           <div class="itemCol">
-            <div class="txt">${it}</div>
-            <textarea class="note" data-id="${id}" placeholder="notes...">${r.note || ''}</textarea>
+            <div class="txt">${itemTitle(it)}</div>
+            ${how ? `<div class="how">${how}</div>` : ''}
+            <textarea class="note" data-id="${id}" placeholder="what you saw (optional)...">${r.note || ''}</textarea>
           </div>
           <button class="rmBtn" data-pi="${pi}" data-ii="${ii}" title="remove item">✕</button>
         </div>`;
@@ -379,8 +411,48 @@ function renderMain(){
   wireMainEvents();
 }
 
+// Build a plain-English message the user can paste into a Claude chat. Claude
+// then writes it into data/<game>.json and pushes; the app pulls it back.
+function claudeMessage(){
+  const g = currentGame(); const run = currentRun(); if (!g || !run) return '';
+  const lines = [];
+  lines.push(`Please log this playtest into the tracker (data/${STATE.currentGame}.json), then commit + push.`);
+  lines.push(``);
+  lines.push(`Game: ${STATE.currentGame}  ·  Build: ${run.build}`);
+  const fails = [], blocks = [], notes = [];
+  g.suite.forEach((p, pi) => p.items.forEach((it, ii) => {
+    const r = run.results[itemId(pi,ii)]; if (!r) return;
+    const line = itemTitle(it) + (r.note ? ' — ' + r.note : '');
+    if (r.status === 'fail') fails.push(line);
+    else if (r.status === 'blocked') blocks.push(line);
+    else if (r.status === 'pass' && r.note) notes.push('PASS: ' + line);
+  }));
+  if (fails.length){ lines.push(``, `Failed:`); fails.forEach(f => lines.push('- ' + f)); }
+  if (blocks.length){ lines.push(``, `Blocked:`); blocks.forEach(f => lines.push('- ' + f)); }
+  if (run.bugs.length){
+    lines.push(``, `Bugs I logged:`);
+    run.bugs.forEach(b => lines.push(`- [${b.severity}] ${b.title}${b.actual ? ' — ' + b.actual : ''}`));
+  }
+  const dbEntries = Object.entries(run.debrief).filter(([,v]) => v);
+  if (dbEntries.length){ lines.push(``, `My notes:`); dbEntries.forEach(([,v]) => lines.push('- ' + v)); }
+  if (notes.length){ lines.push(``, `Passed with notes:`); notes.forEach(n => lines.push('- ' + n)); }
+  if (!fails.length && !blocks.length && !run.bugs.length && !dbEntries.length && !notes.length)
+    lines.push(``, `(No issues recorded yet — everything I checked looked fine.)`);
+  return lines.join('\n');
+}
+
 function wireMainEvents(){
   const run = currentRun(); if (!run) return;
+  const copyBtn = document.getElementById('copyClaudeBtn');
+  if (copyBtn) copyBtn.onclick = async () => {
+    const msg = claudeMessage();
+    try { await navigator.clipboard.writeText(msg); copyBtn.textContent = '✓ Copied — paste into Claude'; }
+    catch(e){
+      // clipboard blocked (e.g. non-https) — fall back to a selectable prompt
+      window.prompt('Copy this and paste it into a Claude chat:', msg);
+    }
+    setTimeout(() => { if (copyBtn) copyBtn.textContent = '💬 Copy for Claude'; }, 2500);
+  };
   document.querySelectorAll('.statusBtn').forEach(b => b.onclick = () => {
     const id = b.dataset.id;
     const r = run.results[id] || { status: 'untested', note: '' };
@@ -401,7 +473,7 @@ function wireMainEvents(){
     const pi = +b.dataset.pi;
     const input = document.querySelector(`.addItemInput[data-pi="${pi}"]`);
     if (!input.value.trim()) return;
-    currentGame().suite[pi].items.push(input.value.trim());
+    currentGame().suite[pi].items.push({ t: input.value.trim(), h: '' });
     save(); renderMain();
   });
   const addBugBtn = document.getElementById('addBugBtn');
@@ -432,6 +504,12 @@ function wireMainEvents(){
 function renderAll(){ renderGameSelect(); renderRunList(); renderMain(); }
 
 // ------------------------------------------------------------------ setup --
+// how-it-works strip: closeable, remembers the choice
+if (localStorage.getItem('ptt_how_hidden') === '1') document.getElementById('howstrip').classList.add('hidden');
+document.getElementById('howClose').onclick = () => {
+  document.getElementById('howstrip').classList.add('hidden');
+  localStorage.setItem('ptt_how_hidden', '1');
+};
 document.getElementById('gameSel').onchange = e => {
   STATE.currentGame = e.target.value; save(); renderAll();
 };
@@ -463,7 +541,7 @@ document.getElementById('exportMdBtn').onclick = () => {
     p.items.forEach((it, ii) => {
       const r = run.results[itemId(pi,ii)] || { status: 'untested', note: '' };
       const mark = r.status === 'pass' ? '[x]' : r.status === 'fail' ? '[FAIL]' : r.status === 'blocked' ? '[BLOCKED]' : '[ ]';
-      md += `- ${mark} ${it}${r.note ? '  — ' + r.note : ''}\n`;
+      md += `- ${mark} ${itemTitle(it)}${r.note ? '  — ' + r.note : ''}\n`;
     });
     md += '\n';
   });

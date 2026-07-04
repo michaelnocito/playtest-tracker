@@ -1,60 +1,141 @@
 {
   "suite": [
     {
-      "pass": "Pass 1 — Smoke test",
+      "pass": "1. Quick check — do this every build",
       "items": [
-        "Loads with no console errors",
-        "Reaches gameplay in ≤1 input from load",
-        "Core loop reachable and completes one full cycle",
-        "Restart/retry works",
-        "Audio plays, mute works",
-        "No crash, no stuck states, no infinite loading"
+        {
+          "t": "Nothing is broken when it opens",
+          "h": "Open the game. It should show up normally — no error pop-ups, no blank/black screen."
+        },
+        {
+          "t": "You get to play fast",
+          "h": "From the page loading, it should take one click or tap (or none) to actually be playing. No menus in the way."
+        },
+        {
+          "t": "You can finish one whole round",
+          "h": "Play a complete run/level/match from start to finish without getting stuck."
+        },
+        {
+          "t": "Starting over works",
+          "h": "After you finish or lose, you can cleanly start again."
+        },
+        {
+          "t": "Sound plays and mute works",
+          "h": "You can hear audio, and pressing mute actually silences it."
+        },
+        {
+          "t": "Nothing freezes or traps you",
+          "h": "No hanging, no forever-loading, no screen you can’t get out of."
+        }
       ]
     },
     {
-      "pass": "Pass 2 — Cold / first-time-user test",
+      "pass": "2. First-timer test — do this when something is new",
       "items": [
-        "Played with zero prior context / instructions",
-        "No \"wait, what do I do?\" moments (or noted below if any)",
-        "Every action attempted was handled gracefully",
-        "Always clear: what to do now / what I just did / what's next"
+        {
+          "t": "Playable with zero instructions",
+          "h": "Pretend you’ve never seen it. Can you work out what to do just by looking at the screen?"
+        },
+        {
+          "t": "No “wait… what do I do?” moments",
+          "h": "Write down anywhere you got confused. That’s a spot to fix — it’s not you being slow."
+        },
+        {
+          "t": "It survives weird inputs",
+          "h": "Try things it might not expect — spam buttons, tap random spots. It shouldn’t break."
+        },
+        {
+          "t": "You always know where you are",
+          "h": "At any moment you can tell: what to do now, what you just did, and what’s coming next."
+        }
       ]
     },
     {
-      "pass": "Pass 3 — Systematic feature pass",
+      "pass": "3. Check every feature — the thorough pass",
       "items": [
-        "Every menu screen: every control does what its label says",
-        "Every input method reaches every action (keyboard/touch/controller)",
-        "Every currency/progression system: earn it, spend it, see it update",
-        "Every save/load path: close and reopen, state survives correctly",
-        "Edge states checked: 0 of something, max of something, first vs Nth time",
-        "Checked at min and max supported resolution/aspect ratio"
+        {
+          "t": "Every button does what it says",
+          "h": "Click each button/menu item. It should do exactly what its label promises."
+        },
+        {
+          "t": "All the control types work",
+          "h": "Try keyboard, mouse/touch, and controller (if supported). Each should reach every action."
+        },
+        {
+          "t": "Points/coins/progress add up right",
+          "h": "Earn some, spend some. Check the numbers change correctly and don’t glitch."
+        },
+        {
+          "t": "Your progress saves",
+          "h": "Close the game and reopen it. Whatever you unlocked or earned should still be there."
+        },
+        {
+          "t": "The extremes behave",
+          "h": "Check the edges: having zero of something, the maximum, and the very first time vs. later times."
+        },
+        {
+          "t": "Looks right at any size",
+          "h": "Resize the window and try a phone-shaped screen. Nothing should overflow or get cut off."
+        }
       ]
     },
     {
-      "pass": "Pass 4 — Balance / fun pass",
+      "pass": "4. Is it fun and fair? — play a few rounds",
       "items": [
-        "Played 3–5 full sessions back to back",
-        "No unfair difficulty spikes found (or noted below)",
-        "No boring/repetitive stretch found (or noted below)",
-        "Would play a 4th/5th run — yes/no + why (note below)",
-        "Rated 1-5: fun / fair / clear / would-recommend (note below)"
+        {
+          "t": "Played a few rounds back to back",
+          "h": "Do 3–5 full sessions in a row so you feel the real rhythm, not just one lucky or unlucky run."
+        },
+        {
+          "t": "Difficulty feels fair",
+          "h": "Note any moment that felt cheap or unfairly hard, and roughly where it happened."
+        },
+        {
+          "t": "It never got boring",
+          "h": "Note any stretch that dragged or felt repetitive. Boredom counts as a real problem here."
+        },
+        {
+          "t": "You’d actually play again",
+          "h": "Would you start a 4th or 5th round? Jot down why or why not — that answer matters most."
+        },
+        {
+          "t": "Quick gut rating (1–5)",
+          "h": "Rate fun / fair / clear / would-recommend, each 1–5. Do it each build so you can see the trend."
+        }
       ]
     },
     {
-      "pass": "Pass 5 — Platform compliance pass",
+      "pass": "5. Ready for the store — do this before you submit",
       "items": [
-        "Re-ran the platform's own requirements checklist top to bottom",
-        "Tested on actual target device classes, not just desktop",
-        "Tested failure paths: adblock on, slow network, background tab, orientation change"
+        {
+          "t": "Meets the platform’s rules",
+          "h": "Run the platform’s own checklist. For CrazyGames that’s GAME_BIBLE.md in the play-area repo."
+        },
+        {
+          "t": "Tested on real devices",
+          "h": "Not just your desktop browser — try it on an actual phone and/or tablet."
+        },
+        {
+          "t": "Handles bad conditions",
+          "h": "Try it with an ad-blocker on, slow internet, a backgrounded tab, and rotating the phone."
+        }
       ]
     },
     {
-      "pass": "Pass 6 — Regression pass",
+      "pass": "6. Did a fix break anything? — do this after fixing bugs",
       "items": [
-        "Re-tested everything touching the same system as the latest fix",
-        "Re-ran the smoke test (Pass 1) in full",
-        "Re-tested every caller of any shared/adapter code that changed"
+        {
+          "t": "Re-tested around the fix",
+          "h": "Re-check everything near what you changed, not only the one bug you were chasing."
+        },
+        {
+          "t": "Re-ran the quick check",
+          "h": "Do pass 1 again fully. A fix that breaks the basics is worse than the bug it fixed."
+        },
+        {
+          "t": "Checked things that share code",
+          "h": "If you changed something lots of features rely on, test all of those features, not just one."
+        }
       ]
     }
   ],
@@ -70,11 +151,11 @@
         },
         "0:2": {
           "status": "pass",
-          "note": "Combat rebalance: normal/fast/spear enemies now take 2+ hits, wide screen-clearing throw gated behind combo≥4 (FINISH_AT). Loop completes."
+          "note": "Combat rebalance: normal/fast/spear enemies take 2+ hits, wide clear gated behind combo≥4. Loop completes."
         },
         "5:1": {
           "status": "pass",
-          "note": "Verified via direct function calls in preview (hp decrement/stagger/lethal/empowered paths, brute shove-chain unaffected)"
+          "note": "Verified via direct function calls in preview (hp decrement/stagger/lethal/empowered, brute shove-chain unaffected)"
         }
       },
       "bugs": [
@@ -83,9 +164,9 @@
           "title": "Counter-throw was OP — real fighting was skippable",
           "severity": "Major",
           "freq": "always",
-          "repro": "1. Counter early and often\n2. Watch crowds clear instantly",
+          "repro": "1. Counter early and often",
           "expected": "Crowd-clear is an earned payoff",
-          "actual": "Every counter auto-cleared neighbors — FIXED (gate the wide throw/SWEEP/STRIKE behind combo≥4; below that a kill fells one enemy). Enemy density cut ~30-40%."
+          "actual": "Every counter auto-cleared neighbors — FIXED (gate wide throw behind combo≥4; density cut ~30-40%)"
         }
       ],
       "debrief": {
@@ -103,7 +184,7 @@
       "results": {
         "4:0": {
           "status": "pass",
-          "note": "Second CG-guidelines audit — turned the same methodology on JF-#036's own fixes"
+          "note": "Second CG-guidelines audit — turned the same methodology on #036's own fixes"
         },
         "5:0": {
           "status": "pass",
@@ -111,7 +192,7 @@
         },
         "5:2": {
           "status": "pass",
-          "note": "Confirmed live: zero SDK-throttle console errors (a compressed bot run had produced 56 before the debounce fix)"
+          "note": "Live: zero SDK-throttle console errors (a compressed bot run had produced 56 before the debounce fix)"
         }
       },
       "bugs": [
@@ -120,9 +201,9 @@
           "title": "Shared SDK debounce silently ate happytime() on every win",
           "severity": "Critical",
           "freq": "always",
-          "repro": "1. Win a district (gameplayStop + happytime fire same tick)",
-          "expected": "Both fire",
-          "actual": "Shared gate treated happytime as a repeat of stop — FIXED (independent gpLast.start/stop/happy)"
+          "repro": "1. Win a district",
+          "expected": "Both gameplayStop + happytime fire",
+          "actual": "Shared gate treated happytime as a repeat — FIXED (independent timestamps)"
         },
         {
           "id": "b-jf037-2",
@@ -131,25 +212,25 @@
           "freq": "always",
           "repro": "1. Build for GameMonetize/GameDistribution\n2. Trigger first ad",
           "expected": "Run continues after ad",
-          "actual": "startRun waits on a callback the stub never called → soft-locked menu. FIXED (stubs accept + invoke cb)"
+          "actual": "startRun waited on a callback the stub never called → soft-lock. FIXED"
         },
         {
           "id": "b-jf037-3",
           "title": "First interstitial could fire on run #2",
           "severity": "Major",
           "freq": "always",
-          "repro": "1. Start a session\n2. Finish run 1, start run 2",
+          "repro": "1. Start session\n2. Finish run 1, start run 2",
           "expected": "No ad before a real 3-min wait",
-          "actual": "adT started at 0 so cooldown was already satisfied — FIXED (adT = session load time)"
+          "actual": "adT started at 0 — FIXED (adT = session load time)"
         },
         {
           "id": "b-jf037-4",
           "title": "Mute button clickable while hidden under pause overlay",
           "severity": "Minor",
           "freq": "always",
-          "repro": "1. Pause\n2. Tap top-right corner",
+          "repro": "1. Pause\n2. Tap top-right",
           "expected": "Resume (tap anywhere)",
-          "actual": "Silently toggled mute — FIXED (draw mute after overlay)"
+          "actual": "Silently toggled mute — FIXED"
         }
       ],
       "debrief": {
@@ -167,7 +248,7 @@
       "results": {
         "4:0": {
           "status": "pass",
-          "note": "First CG-guidelines audit — ran GAME_BIBLE Part 1/4 checklist against the code"
+          "note": "First CG-guidelines audit — ran GAME_BIBLE checklist against the code"
         },
         "4:2": {
           "status": "fail",
@@ -175,7 +256,7 @@
         },
         "5:0": {
           "status": "pass",
-          "note": "12 fixes applied; bot suite re-run 10/12 wins (duck:jump hit ratio improved ~5:1 → 2:1)"
+          "note": "12 fixes applied; bot suite 10/12 wins (duck:jump hit ratio improved ~5:1 → 2:1)"
         }
       },
       "bugs": [
@@ -184,9 +265,9 @@
           "title": "Ad request fired in same tick as gameplayStart()",
           "severity": "Major",
           "freq": "always",
-          "repro": "1. Finish run\n2. Start next run when ad due",
+          "repro": "1. Finish run\n2. Start next when ad due",
           "expected": "gameplayStart only after ad resolves",
-          "actual": "SDK saw gameplay \"active\" during an in-flight ad — FIXED (split startRun/beginRun, interstitial callback-gated)"
+          "actual": "SDK saw gameplay \"active\" during an in-flight ad — FIXED"
         },
         {
           "id": "b-jf036-2",
@@ -195,7 +276,7 @@
           "freq": "always",
           "repro": "1. Open on phone held portrait",
           "expected": "Prompt to rotate",
-          "actual": "Tiny letterboxed strip, no explanation — FIXED (portraitBlock + auto-pause + rotate screen)"
+          "actual": "Tiny letterboxed strip, no explanation — FIXED"
         },
         {
           "id": "b-jf036-3",
@@ -204,7 +285,7 @@
           "freq": "always",
           "repro": "1. Compare DUCK_DUR (26) vs JUMP_DUR (32)",
           "expected": "Symmetric",
-          "actual": "~19% shorter; bot hits skewed to high-windup throws — FIXED (DUCK_DUR→30)"
+          "actual": "~19% shorter — FIXED (DUCK_DUR→30)"
         }
       ],
       "debrief": {
@@ -222,7 +303,7 @@
       "results": {
         "0:0": {
           "status": "pass",
-          "note": "600-frame all-silly smoke (every joke scroll + cosmetic + Butcher boss): no throw/error"
+          "note": "600-frame all-silly smoke (every joke scroll + cosmetic + Butcher boss): no error"
         },
         "0:2": {
           "status": "pass",
@@ -230,7 +311,7 @@
         },
         "3:1": {
           "status": "pass",
-          "note": "bot fairness ?bot=3&react=12 = 12/12 wins, 7 hits all dodgeable throws, 0% unreactable, 0% pincer"
+          "note": "bot fairness = 12/12 wins, 7 hits all dodgeable throws, 0% unreactable, 0% pincer"
         }
       },
       "bugs": [],
@@ -238,7 +319,7 @@
         "q1": "",
         "q2": "",
         "q3": "",
-        "q4": "10 gags all built on existing systems (chatter, gag props, reactive moon, longest-yeet, joke scrolls, cosmetics, bowling STRIKE, hype announcer, boss personalities, cameo).",
+        "q4": "10 gags all built on existing systems.",
         "q5": ""
       }
     },
@@ -257,11 +338,11 @@
         },
         "2:0": {
           "status": "pass",
-          "note": "FULL TEST BATTERY (headless, 17/17 pass): dodge windows generous, wrong-height correctly fails, 52f telegraph + 18-32f reaction budget (>> human ~12-15f), attack timing (counter/perfect/whiff), spacing constants sane"
+          "note": "FULL TEST BATTERY (headless, 17/17): dodge windows generous, wrong-height fails correctly, 52f telegraph + 18-32f reaction budget, attack timing, spacing sane"
         },
         "3:1": {
           "status": "pass",
-          "note": "BOT FAIRNESS re-run (?bot=3&react=12): 12/12 wins, 3 hits (all dodgeable darts), 0% unreactable, 0% pincer"
+          "note": "BOT FAIRNESS re-run: 12/12 wins, 3 hits (all dodgeable darts), 0% unreactable, 0% pincer"
         }
       },
       "bugs": [
@@ -270,9 +351,9 @@
           "title": "Duck pose read as \"short\", not \"crouching\"",
           "severity": "Minor",
           "freq": "always",
-          "repro": "1. Duck during a fight (down/S)\n2. Observe player silhouette",
+          "repro": "1. Duck during a fight\n2. Look at the player",
           "expected": "Clear deep-crouch read",
-          "actual": "Uniform squash only read as \"short\" — FIXED in this batch: rebuilt with explicit horse-stance pose + torsoDrop + ground shadow, verified via canvas-crop render"
+          "actual": "Uniform squash only read as \"short\" — FIXED: explicit horse-stance pose + torsoDrop + ground shadow"
         }
       ],
       "debrief": {
@@ -294,7 +375,7 @@
         },
         "3:1": {
           "status": "pass",
-          "note": "FAIRNESS (?bot=3&react=12): 11/12 wins (was 12/12), avg wave 4.8, 14 hits (13 darts + 1 melee), 0% unreactable, 7% pincer. Harder + still fair."
+          "note": "FAIRNESS (?bot=3&react=12): 11/12 wins, 14 hits (13 darts + 1 melee), 0% unreactable, 7% pincer. Harder + still fair."
         },
         "3:0": {
           "status": "pass",
@@ -321,11 +402,11 @@
         },
         "0:5": {
           "status": "pass",
-          "note": "Zero hits taken across 12 runs; no livelock after bot fixes (no longer pokes brutes/bosses, waits on body-block, dismisses S_END)"
+          "note": "Zero hits across 12 runs; no livelock after bot fixes (no longer pokes brutes/bosses, waits on body-block, dismisses ending)"
         },
         "3:1": {
           "status": "pass",
-          "note": "No unreactable telegraphs at normal reaction speed. Stress ?bot=2&react=18 (300ms): 8/8 wins, 4 hits all intended (late vipers 267ms floor + 1 allowed late pincer diff>6)"
+          "note": "No unreactable telegraphs at normal speed. Stress ?bot=2&react=18 (300ms): 8/8 wins, 4 hits all intended"
         }
       },
       "bugs": [],

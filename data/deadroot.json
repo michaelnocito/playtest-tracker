@@ -1,0 +1,190 @@
+{
+  "suite": [
+    {
+      "pass": "1. Quick check — do this every build",
+      "items": [
+        {
+          "t": "Nothing is broken when it opens",
+          "h": "Open the game. It should show up normally — no error pop-ups, no blank/black screen."
+        },
+        {
+          "t": "You get to play fast",
+          "h": "From the page loading, it should take one click or tap (or none) to actually be playing. No menus in the way."
+        },
+        {
+          "t": "You can finish one whole round",
+          "h": "Play a complete run/level/match from start to finish without getting stuck."
+        },
+        {
+          "t": "Starting over works",
+          "h": "After you finish or lose, you can cleanly start again."
+        },
+        {
+          "t": "Sound plays and mute works",
+          "h": "You can hear audio, and pressing mute actually silences it."
+        },
+        {
+          "t": "Nothing freezes or traps you",
+          "h": "No hanging, no forever-loading, no screen you can’t get out of."
+        }
+      ]
+    },
+    {
+      "pass": "2. First-timer test — do this when something is new",
+      "items": [
+        {
+          "t": "Playable with zero instructions",
+          "h": "Pretend you’ve never seen it. Can you work out what to do just by looking at the screen?"
+        },
+        {
+          "t": "No “wait… what do I do?” moments",
+          "h": "Write down anywhere you got confused. That’s a spot to fix — it’s not you being slow."
+        },
+        {
+          "t": "It survives weird inputs",
+          "h": "Try things it might not expect — spam buttons, tap random spots. It shouldn’t break."
+        },
+        {
+          "t": "You always know where you are",
+          "h": "At any moment you can tell: what to do now, what you just did, and what’s coming next."
+        }
+      ]
+    },
+    {
+      "pass": "3. Check every feature — the thorough pass",
+      "items": [
+        {
+          "t": "Every button does what it says",
+          "h": "Click each button/menu item. It should do exactly what its label promises."
+        },
+        {
+          "t": "All the control types work",
+          "h": "Try keyboard, mouse/touch, and controller (if supported). Each should reach every action."
+        },
+        {
+          "t": "Points/coins/progress add up right",
+          "h": "Earn some, spend some. Check the numbers change correctly and don’t glitch."
+        },
+        {
+          "t": "Your progress saves",
+          "h": "Close the game and reopen it. Whatever you unlocked or earned should still be there."
+        },
+        {
+          "t": "The extremes behave",
+          "h": "Check the edges: having zero of something, the maximum, and the very first time vs. later times."
+        },
+        {
+          "t": "Looks right at any size",
+          "h": "Resize the window and try a phone-shaped screen. Nothing should overflow or get cut off."
+        }
+      ]
+    },
+    {
+      "pass": "4. Is it fun and fair? — play a few rounds",
+      "items": [
+        {
+          "t": "Played a few rounds back to back",
+          "h": "Do 3–5 full sessions in a row so you feel the real rhythm, not just one lucky or unlucky run."
+        },
+        {
+          "t": "Difficulty feels fair",
+          "h": "Note any moment that felt cheap or unfairly hard, and roughly where it happened."
+        },
+        {
+          "t": "It never got boring",
+          "h": "Note any stretch that dragged or felt repetitive. Boredom counts as a real problem here."
+        },
+        {
+          "t": "You’d actually play again",
+          "h": "Would you start a 4th or 5th round? Jot down why or why not — that answer matters most."
+        },
+        {
+          "t": "Quick gut rating (1–5)",
+          "h": "Rate fun / fair / clear / would-recommend, each 1–5. Do it each build so you can see the trend."
+        }
+      ]
+    },
+    {
+      "pass": "5. Ready for the store — do this before you submit",
+      "items": [
+        {
+          "t": "Meets the platform’s rules",
+          "h": "Run the platform’s own checklist. For CrazyGames that’s GAME_BIBLE.md in the play-area repo."
+        },
+        {
+          "t": "Tested on real devices",
+          "h": "Not just your desktop browser — try it on an actual phone and/or tablet."
+        },
+        {
+          "t": "Handles bad conditions",
+          "h": "Try it with an ad-blocker on, slow internet, a backgrounded tab, and rotating the phone."
+        }
+      ]
+    },
+    {
+      "pass": "6. Did a fix break anything? — do this after fixing bugs",
+      "items": [
+        {
+          "t": "Re-tested around the fix",
+          "h": "Re-check everything near what you changed, not only the one bug you were chasing."
+        },
+        {
+          "t": "Re-ran the quick check",
+          "h": "Do pass 1 again fully. A fix that breaks the basics is worse than the bug it fixed."
+        },
+        {
+          "t": "Checked things that share code",
+          "h": "If you changed something lots of features rely on, test all of those features, not just one."
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": "hist-dr-001",
+      "build": "DR-#001 slice",
+      "date": "2026-07-03T20:00:00.000Z",
+      "results": {
+        "0:2": {
+          "status": "pass",
+          "note": "First playable slice ships; core corpse-mutation tower-defense loop completes"
+        },
+        "2:0": {
+          "status": "pass",
+          "note": "Corpse/tower tap-radius hit tests verified (near-miss hits + far-miss non-hits) via a temporary debug hook"
+        },
+        "5:0": {
+          "status": "pass",
+          "note": "Robustness pass on the new batch"
+        }
+      },
+      "bugs": [
+        {
+          "id": "b-dr-1",
+          "title": "Corpse-tap returned menu unexpectedly null",
+          "severity": "Major",
+          "freq": "sometimes",
+          "repro": "1. Tap a corpse near the edge",
+          "expected": "Hits register within a sane radius",
+          "actual": "Unbounded hitPad() over-reached — FIXED (capped hitPad at 80px)"
+        },
+        {
+          "id": "b-dr-2",
+          "title": "Dead scaling + spawn-count cap missing in endless",
+          "severity": "Major",
+          "freq": "always",
+          "repro": "1. Reach late endless waves",
+          "expected": "Difficulty scales smoothly, spawns capped",
+          "actual": "Scaling bug + uncapped spawns — FIXED (endlessWave())"
+        }
+      ],
+      "debrief": {
+        "q1": "",
+        "q2": "Next = playtest + tuning.",
+        "q3": "",
+        "q4": "",
+        "q5": ""
+      }
+    }
+  ]
+}
