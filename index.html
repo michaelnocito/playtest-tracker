@@ -9,6 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23C5511F'/%3E%3Cpath d='M28 52l16 16 30-34' stroke='%23FFF8F2' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<!-- Supabase JS client (same project the Analyst Prep Kit uses). Powers live
+     two-way sync: the app reads/writes the playtest_games table directly, and
+     Realtime pushes Claude's chat-side edits to the open page within a second. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   /* Grain design system (shared with Analyst Prep Kit): warm clay-on-cream,
      Space Grotesk headings / IBM Plex Sans body / IBM Plex Mono for builds. */
@@ -125,7 +129,7 @@
     <h1>Playtest Tracker</h1>
     <select id="gameSel"></select>
     <button id="newGameBtn">+ new game</button>
-    <button id="pullBtn" title="Grab the latest — picks up anything Claude updated in a chat">⭯ Get updates from Claude</button>
+    <button id="pullBtn" title="Live sync is automatic; this forces an immediate re-sync">⭯ Sync now</button>
     <span id="pullStatus" class="hint" style="margin:0"></span>
     <span style="width:1px;height:20px;background:var(--line)"></span>
     <input id="buildInput" placeholder="build / version (e.g. JF-#038)" style="width:200px">
@@ -144,10 +148,10 @@
     </details>
   </div>
   <div id="howstrip">
-    <b>How this works —</b>
-    <span><span class="dir">Claude → you:</span> when you ask Claude to log feedback, it saves here. Hit <b>“Get updates from Claude”</b> (or just reload) to see it.</span>
+    <b>Live sync is on.</b>
+    <span><span class="dir">Claude → you:</span> when Claude logs feedback in a chat, it appears here on its own within a second. No button needed.</span>
     <span class="sep">·</span>
-    <span><span class="dir">You → Claude:</span> played something and want it tracked? Just tell Claude in chat. Or tap <b>“Copy for Claude”</b> on a test and paste it into chat.</span>
+    <span><span class="dir">You → Claude:</span> anything you mark or type here saves to the cloud automatically, and Claude can read it in your next chat. Just talk to Claude in plain words.</span>
     <button id="howClose" title="hide">✕</button>
   </div>
   <div id="sidebar">
@@ -159,6 +163,14 @@
 <script>
 'use strict';
 const KEY = 'ptt_state_v1';
+
+// --- Supabase config (shared project w/ Analyst Prep Kit; publishable key is
+// browser-safe with RLS). To use a separate project, swap these two values. ---
+const SB_URL = 'https://liiivtbyyawueboeavmw.supabase.co';
+const SB_KEY = 'sb_publishable_O-6hDpC3l1KdDtHpcv6JVw_O5dSJQor';
+const SB_TABLE = 'playtest_games';
+let sb = null, sbLive = false;
+try { if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); } catch(e){}
 
 // Seeded from PLAYTEST_CHECKLIST.md — generic, game-agnostic; editable per game.
 // Each item is { t: short title, h: plain-English "how to check + what a pass
@@ -213,7 +225,10 @@ function load(){
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.games) return s; } catch(e){}
   return { games: {}, currentGame: null, currentRun: {} };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(STATE)); }
+function save(){
+  localStorage.setItem(KEY, JSON.stringify(STATE));
+  if (STATE.currentGame) sbPushGame(STATE.currentGame);   // live push to cloud (debounced, no-op if offline)
+}
 let STATE = load();
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -222,12 +237,56 @@ function ensureGame(name){
   if (!STATE.games[name]) STATE.games[name] = { suite: JSON.parse(JSON.stringify(DEFAULT_SUITE)), runs: [] };
 }
 
+// ------------------------------------------------------------ supabase ------
+// Live two-way sync. The app reads/writes the playtest_games table directly
+// (one row per game: {name, data:{suite,runs}, updated_at}). Claude reads/
+// writes the same table from a chat via the REST API. Realtime pushes those
+// chat-side edits to this open page within ~1s. If the table doesn't exist
+// yet or Supabase is unreachable, everything below no-ops and the app falls
+// back to the git data/ files + localStorage (see pullGame), so nothing breaks.
+async function sbPullAll(){
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb.from(SB_TABLE).select('name,data');
+    if (error) throw error;
+    sbLive = true;
+    return data;   // [{name, data:{suite,runs}}, ...]
+  } catch(e){ sbLive = false; return null; }
+}
+const sbPushTimers = {};
+function sbPushGame(name){
+  if (!sb || !STATE.games[name]) return;
+  clearTimeout(sbPushTimers[name]);
+  sbPushTimers[name] = setTimeout(async () => {   // debounce rapid edits
+    try {
+      await sb.from(SB_TABLE).upsert(
+        { name, data: STATE.games[name], updated_at: new Date().toISOString() },
+        { onConflict: 'name' });
+      sbLive = true;
+      setPullStatus('saved to cloud ' + new Date().toLocaleTimeString());
+    } catch(e){ /* offline / table missing: git+localStorage still hold it */ }
+  }, 600);
+}
+function sbSubscribe(){
+  if (!sb) return;
+  try {
+    sb.channel('playtest_games_live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: SB_TABLE }, payload => {
+        const row = payload.new; if (!row || !row.name) return;
+        // merge the incoming game and re-render if it's the one on screen
+        STATE.games[row.name] = mergeGame(STATE.games[row.name], row.data);
+        localStorage.setItem(KEY, JSON.stringify(STATE));
+        setPullStatus('updated by Claude ' + new Date().toLocaleTimeString());
+        renderAll();
+      })
+      .subscribe();
+  } catch(e){}
+}
+function setPullStatus(txt){ const s = document.getElementById('pullStatus'); if (s) s.textContent = txt; }
+
 // -------------------------------------------------------------- git sync ----
-// One-way sync: a Claude chat session commits data/<game>.json directly to
-// this (now public) repo when you give feedback in conversation; this app
-// only ever READS that file (a static page can't safely hold a GitHub write
-// token in public code, so it never pushes on its own). "Pull latest" and
-// the auto-pull-on-load below are how the browser's local view catches up.
+// Fallback source when Supabase is unavailable (or before the table is made):
+// the public repo's data/<game>.json files, committed by Claude from a chat.
 async function fetchGameFile(name){
   try {
     const res = await fetch('data/' + encodeURIComponent(name) + '.json', { cache: 'no-store' });
@@ -251,15 +310,21 @@ function mergeGame(local, incoming){
   const runs = [...byId.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
   return { suite: incoming.suite || local.suite, runs };
 }
+function persistLocal(){ localStorage.setItem(KEY, JSON.stringify(STATE)); }   // save without re-pushing to cloud
 async function pullGame(name, silent){
-  const status = document.getElementById('pullStatus');
-  if (status) status.textContent = 'pulling...';
-  const incoming = await fetchGameFile(name);
+  setPullStatus('checking for updates...');
+  // cloud first (live source); fall back to the git file if the table is not up yet
+  let incoming = null;
+  if (sb){
+    try { const { data, error } = await sb.from(SB_TABLE).select('data').eq('name', name).maybeSingle();
+      if (!error && data) { incoming = data.data; sbLive = true; } } catch(e){}
+  }
+  if (!incoming) incoming = await fetchGameFile(name);
   if (incoming){
     STATE.games[name] = mergeGame(STATE.games[name], incoming);
-    save();
-    if (status) status.textContent = 'pulled ' + new Date().toLocaleTimeString();
-  } else if (status) status.textContent = silent ? '' : 'no data/' + name + '.json yet';
+    persistLocal();
+    setPullStatus((sbLive ? 'synced ' : 'pulled ') + new Date().toLocaleTimeString());
+  } else setPullStatus(silent ? '' : 'nothing to pull yet');
   return incoming;
 }
 function newRun(gameName, build){
@@ -593,15 +658,23 @@ if (!STATE.currentGame || !STATE.games[STATE.currentGame]) {
 }
 renderAll();
 
-// JF-style startup sync: pull the index of known games (so games Claude has
-// already committed data for show up even on a browser that's never touched
-// them), ensure a local shell for each, then silently pull the current one.
+// Startup sync: try Supabase first (live source for every game at once), fall
+// back to the git index + files if the table isn't up yet. Then subscribe to
+// Realtime so Claude's chat-side edits land on this page live.
 (async () => {
-  const names = await fetchIndex();
-  names.forEach(n => ensureGame(n));
-  if (!STATE.currentGame && names.length) STATE.currentGame = names[0];
-  if (STATE.currentGame){ await pullGame(STATE.currentGame, true); }
-  save(); renderAll();
+  const rows = await sbPullAll();
+  if (rows && rows.length){
+    rows.forEach(r => { STATE.games[r.name] = mergeGame(STATE.games[r.name], r.data); });
+    setPullStatus('synced ' + new Date().toLocaleTimeString());
+  } else {
+    // fallback path (Supabase down or table not created yet)
+    const names = await fetchIndex();
+    names.forEach(n => ensureGame(n));
+    if (names.length){ for (const n of names) await pullGame(n, true); }
+  }
+  if (!STATE.currentGame && Object.keys(STATE.games).length) STATE.currentGame = Object.keys(STATE.games)[0];
+  persistLocal(); renderAll();
+  sbSubscribe();
 })();
 </script>
 </body>
