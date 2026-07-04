@@ -132,7 +132,7 @@ const GAMES = {
 
 for (const [name, runs] of Object.entries(GAMES)){
   runs.sort((a, b) => new Date(b.date) - new Date(a.date));
-  fs.writeFileSync(`data/${name}.json`, JSON.stringify({ suite: SUITE, runs }, null, 2));
+  fs.writeFileSync(`data/${name}.json`, JSON.stringify({ suite: SUITE, runs, inbox: [] }, null, 2));
 }
 fs.writeFileSync('data/index.json', JSON.stringify(Object.keys(GAMES)) + '\n');
 console.log('seeded', Object.keys(GAMES).length, 'games:',

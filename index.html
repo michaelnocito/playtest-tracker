@@ -121,6 +121,38 @@
   ::-webkit-scrollbar{width:10px;height:10px}
   ::-webkit-scrollbar-thumb{background:var(--stone-300);border-radius:10px;border:2px solid var(--bg)}
   ::-webkit-scrollbar-track{background:transparent}
+  /* quick-capture bar */
+  #captureBar{display:flex;gap:8px;align-items:center;background:var(--warm-soft);
+    border:1px solid var(--amber-200);border-radius:12px;padding:10px 12px;margin-bottom:20px}
+  #captureBar .capIcon{font-size:18px}
+  #captureBar input{flex:1;background:var(--panel);border-color:var(--amber-200)}
+  #captureBar select{background:var(--panel);border-color:var(--amber-200)}
+  /* sidebar inbox nav */
+  .inboxNav{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:10px;
+    cursor:pointer;font-weight:600;background:var(--warm-soft);border:1px solid var(--amber-200);
+    color:var(--warm);margin-bottom:12px}
+  .inboxNav:hover{border-color:var(--amber-400)}
+  .inboxNav.active{box-shadow:0 0 0 1px var(--amber-400)}
+  .inboxNav .badge{background:var(--warm);color:#FFF8F2;border-radius:20px;padding:1px 8px;font-size:12px;margin-left:auto}
+  .listLabel{font-family:var(--font-display);color:var(--subtle);font-size:11px;
+    letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin:4px 0 8px}
+  /* inbox items */
+  .inboxList{display:flex;flex-direction:column;gap:10px}
+  .inboxItem{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+  .inboxItem.status-fixed{opacity:0.6}
+  .inboxItem.status-dismissed{opacity:0.45}
+  .inboxItem.status-roadmap{border-color:var(--amber-400)}
+  .inboxTop{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+  .itag{font-family:var(--font-mono);font-weight:600;padding:1px 8px;border-radius:20px}
+  .tag-bug{background:var(--bad-soft);color:var(--bad)}
+  .tag-idea{background:var(--warm-soft);color:var(--warm)}
+  .tag-note{background:var(--sunken);color:var(--muted)}
+  .istatus{color:var(--subtle)}
+  .idate{color:var(--subtle);margin-left:auto;margin-right:4px}
+  .itext{font-weight:500;line-height:1.5}
+  .triage{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .triage button{font-size:12px;padding:5px 10px;border-radius:8px;color:var(--muted)}
+  .triage button:hover{border-color:var(--accent);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -234,7 +266,17 @@ let STATE = load();
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 function ensureGame(name){
-  if (!STATE.games[name]) STATE.games[name] = { suite: JSON.parse(JSON.stringify(DEFAULT_SUITE)), runs: [] };
+  if (!STATE.games[name]) STATE.games[name] = { suite: JSON.parse(JSON.stringify(DEFAULT_SUITE)), runs: [], inbox: [] };
+  if (!STATE.games[name].inbox) STATE.games[name].inbox = [];   // back-fill older games
+}
+// Feedback inbox item: { id, text, tag:'bug'|'idea'|'note', status:'new'|
+// 'roadmap'|'fixed'|'dismissed', date, note }. Capture is one line; triage
+// (setting tag/status) happens later, matching how studios split the two.
+function addInbox(gameName, text, tag){
+  const g = STATE.games[gameName]; if (!g) return;
+  if (!g.inbox) g.inbox = [];
+  g.inbox.unshift({ id: uid(), text: text.trim(), tag: tag || 'note', status: 'new', date: new Date().toISOString(), note: '' });
+  save();
 }
 
 // ------------------------------------------------------------ supabase ------
@@ -306,9 +348,13 @@ function mergeGame(local, incoming){
   if (!incoming) return local;
   if (!local) return incoming;
   const byId = new Map();
-  [...incoming.runs, ...local.runs].forEach(r => byId.set(r.id, r));
+  [...(incoming.runs||[]), ...(local.runs||[])].forEach(r => byId.set(r.id, r));
   const runs = [...byId.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
-  return { suite: incoming.suite || local.suite, runs };
+  // merge the feedback inbox the same way (incoming wins on conflict = Claude's triage)
+  const inboxById = new Map();
+  [...(local.inbox||[]), ...(incoming.inbox||[])].forEach(i => inboxById.set(i.id, i));
+  const inbox = [...inboxById.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
+  return { suite: incoming.suite || local.suite, runs, inbox };
 }
 function persistLocal(){ localStorage.setItem(KEY, JSON.stringify(STATE)); }   // save without re-pushing to cloud
 async function pullGame(name, silent){
@@ -343,6 +389,59 @@ function currentRun(){
 
 // ---------------------------------------------------------------- render ----
 let activeTab = 'checklist';
+let mainView = 'run';   // 'run' | 'inbox'
+
+const TAG_LABEL = { bug: '🐞 bug', idea: '💡 idea', note: '📝 note' };
+const INBOX_STATUS = { new: 'new', roadmap: 'roadmapped', fixed: 'fixed', dismissed: 'dismissed' };
+
+// Always-on quick capture: type a line, tag it, hit add. Zero navigation so it
+// never interrupts a play session (the whole point of "jump in and test").
+function captureBarHTML(){
+  return `<div id="captureBar">
+    <span class="capIcon">💡</span>
+    <input id="capInput" placeholder="Jump-in feedback: type anything you noticed, then Add..." autocomplete="off">
+    <select id="capTag" title="what kind of thing is this?">
+      <option value="bug">🐞 bug</option>
+      <option value="idea">💡 idea</option>
+      <option value="note" selected>📝 note</option>
+    </select>
+    <button id="capAdd" class="btn-primary">Add</button>
+  </div>`;
+}
+
+function inboxViewHTML(g){
+  const inbox = g.inbox || [];
+  const nNew = inbox.filter(i => i.status === 'new').length;
+  let html = `<div class="summary">
+    <span class="pill mono">Feedback inbox</span>
+    <span>${inbox.length} item${inbox.length===1?'':'s'} · ${nNew} untriaged</span>
+    <span style="flex:1"></span>
+    <button id="copyInboxBtn" class="btn-primary" title="Copy the untriaged items to paste into a Claude chat">💬 Send untriaged to Claude</button>
+  </div>
+  <p class="hint">Capture anything above while you play. Later, triage each item: send bugs to be fixed, ideas to the roadmap, or mark them done. Claude reads this list live and acts on it in your next chat.</p>`;
+  if (!inbox.length) return html + '<div class="hint">Nothing captured yet. Use the bar up top while you test.</div>';
+  html += '<div class="inboxList">';
+  inbox.forEach(it => {
+    html += `<div class="inboxItem status-${it.status}">
+      <div class="inboxTop">
+        <span class="itag tag-${it.tag}">${TAG_LABEL[it.tag] || it.tag}</span>
+        <span class="istatus">${INBOX_STATUS[it.status] || it.status}</span>
+        <span class="idate">${new Date(it.date).toLocaleDateString()}</span>
+        <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
+      </div>
+      <div class="itext">${escapeHtml(it.text)}</div>
+      ${it.note ? `<div class="how">Claude: ${escapeHtml(it.note)}</div>` : ''}
+      <div class="triage">
+        <button data-tri="bug" data-id="${it.id}">→ 🐞 Bug</button>
+        <button data-tri="roadmap" data-id="${it.id}">→ 🗺️ Roadmap</button>
+        <button data-tri="fixed" data-id="${it.id}">✓ Fixed</button>
+        <button data-tri="dismissed" data-id="${it.id}">Dismiss</button>
+      </div>
+    </div>`;
+  });
+  return html + '</div>';
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 function itemId(passIdx, itemIdx){ return passIdx + ':' + itemIdx; }
 
@@ -364,15 +463,29 @@ function renderRunList(){
   const list = document.getElementById('runList');
   list.innerHTML = '';
   const g = currentGame();
-  if (!g || !g.runs.length){ list.innerHTML = '<div class="hint">No runs yet.</div>'; return; }
+  if (!g){ list.innerHTML = '<div class="hint">No game selected.</div>'; return; }
+
+  // Feedback inbox entry always at the top (spans all runs for this game)
+  const nNew = (g.inbox || []).filter(i => i.status === 'new').length;
+  const inboxBtn = document.createElement('div');
+  inboxBtn.className = 'inboxNav' + (mainView === 'inbox' ? ' active' : '');
+  inboxBtn.innerHTML = `📥 Feedback inbox${nNew ? ` <span class="badge">${nNew}</span>` : ''}`;
+  inboxBtn.onclick = () => { mainView = 'inbox'; persistLocal(); renderAll(); };
+  list.appendChild(inboxBtn);
+
+  const label = document.createElement('div');
+  label.className = 'listLabel'; label.textContent = 'Test runs';
+  list.appendChild(label);
+
+  if (!g.runs.length){ const h = document.createElement('div'); h.className = 'hint'; h.textContent = 'No test runs yet.'; list.appendChild(h); return; }
   const run = currentRun();
   g.runs.forEach(r => {
     const div = document.createElement('div');
-    div.className = 'runItem' + (run && r.id === run.id ? ' active' : '');
+    div.className = 'runItem' + (mainView === 'run' && run && r.id === run.id ? ' active' : '');
     const counts = tallyResults(r);
     div.innerHTML = `<div class="build">${r.build}</div><div class="meta">${new Date(r.date).toLocaleString()}</div>
       <div class="meta">✓${counts.pass} · ✗${counts.fail} · ⛔${counts.blocked} · ${r.bugs.length} bug${r.bugs.length===1?'':'s'}</div>`;
-    div.onclick = () => { STATE.currentRun[STATE.currentGame] = r.id; save(); renderAll(); };
+    div.onclick = () => { STATE.currentRun[STATE.currentGame] = r.id; mainView = 'run'; persistLocal(); renderAll(); };
     list.appendChild(div);
   });
 }
@@ -389,12 +502,27 @@ function tallyResults(run){
 
 function renderMain(){
   const main = document.getElementById('main');
-  const g = currentGame(); const run = currentRun();
+  const g = currentGame();
   if (!g){ main.innerHTML = '<div class="hint">Pick or add a game up top to get started.</div>'; return; }
-  if (!run){ main.innerHTML = '<div class="hint">No test yet for this game — type a build/version up top and click <b>Start New Test</b>. Or just tell Claude in chat what you want tested.</div>'; return; }
+
+  // the quick-capture bar is always on top, in both the inbox and run views
+  let html = captureBarHTML();
+
+  if (mainView === 'inbox'){
+    main.innerHTML = html + inboxViewHTML(g);
+    wireMainEvents();
+    return;
+  }
+
+  const run = currentRun();
+  if (!run){
+    main.innerHTML = html + '<div class="hint">No test yet for this game — type a build/version up top and click <b>Start New Test</b>. Or just tell Claude in chat what you want tested.</div>';
+    wireMainEvents();
+    return;
+  }
 
   const counts = tallyResults(run);
-  let html = `<div class="summary">
+  html += `<div class="summary">
     <span class="pill mono">${run.build}</span>
     <span>${new Date(run.date).toLocaleString()}</span>
     <span class="pill g">✓ ${counts.pass} pass</span>
@@ -476,6 +604,17 @@ function renderMain(){
   wireMainEvents();
 }
 
+// Paste-able summary of the untriaged inbox (also lives in the cloud, but this
+// lets you hand Claude the exact batch to act on in one message).
+function inboxMessage(){
+  const g = currentGame(); if (!g) return '';
+  const items = (g.inbox || []).filter(i => i.status === 'new');
+  if (!items.length) return `No untriaged feedback for ${STATE.currentGame} right now.`;
+  const lines = [`Here's my untriaged feedback for ${STATE.currentGame}. Please triage each one: fix the bugs, add the ideas to the roadmap, and mark them in the tracker (game "${STATE.currentGame}" in Supabase). Then commit any code/doc changes.`, ``];
+  items.forEach(i => lines.push(`- (${i.tag}) ${i.text}`));
+  return lines.join('\n');
+}
+
 // Build a plain-English message the user can paste into a Claude chat. Claude
 // then writes it into data/<game>.json and pushes; the app pulls it back.
 function claudeMessage(){
@@ -507,6 +646,44 @@ function claudeMessage(){
 }
 
 function wireMainEvents(){
+  // --- quick capture bar (present in every view) ---
+  const capInput = document.getElementById('capInput');
+  const capAdd = document.getElementById('capAdd');
+  const doCapture = () => {
+    if (!capInput || !capInput.value.trim() || !STATE.currentGame) return;
+    addInbox(STATE.currentGame, capInput.value, document.getElementById('capTag').value);
+    capInput.value = '';
+    if (mainView !== 'inbox'){ setPullStatus('captured ✓'); }
+    renderMain(); renderRunList();
+    const ci = document.getElementById('capInput'); if (ci) ci.focus();
+  };
+  if (capAdd) capAdd.onclick = doCapture;
+  if (capInput) capInput.onkeydown = e => { if (e.key === 'Enter') doCapture(); };
+
+  // --- inbox triage (present only in inbox view) ---
+  document.querySelectorAll('[data-tri]').forEach(b => b.onclick = () => {
+    const g = currentGame(); if (!g) return;
+    const it = (g.inbox || []).find(x => x.id === b.dataset.id); if (!it) return;
+    const tri = b.dataset.tri;
+    if (tri === 'bug'){ it.tag = 'bug'; it.status = 'roadmap'; }   // flagged for a fix; Claude confirms + fixes
+    else if (tri === 'roadmap'){ it.tag = 'idea'; it.status = 'roadmap'; }
+    else if (tri === 'fixed'){ it.status = 'fixed'; }
+    else if (tri === 'dismissed'){ it.status = 'dismissed'; }
+    save(); renderMain(); renderRunList();
+  });
+  document.querySelectorAll('[data-inbox-rm]').forEach(b => b.onclick = () => {
+    const g = currentGame(); if (!g) return;
+    g.inbox = (g.inbox || []).filter(x => x.id !== b.dataset.inboxRm);
+    save(); renderMain(); renderRunList();
+  });
+  const copyInbox = document.getElementById('copyInboxBtn');
+  if (copyInbox) copyInbox.onclick = async () => {
+    const msg = inboxMessage();
+    try { await navigator.clipboard.writeText(msg); copyInbox.textContent = '✓ Copied — paste into Claude'; }
+    catch(e){ window.prompt('Copy this and paste it into a Claude chat:', msg); }
+    setTimeout(() => { if (copyInbox) copyInbox.textContent = '💬 Send untriaged to Claude'; }, 2500);
+  };
+
   const run = currentRun(); if (!run) return;
   const copyBtn = document.getElementById('copyClaudeBtn');
   if (copyBtn) copyBtn.onclick = async () => {
