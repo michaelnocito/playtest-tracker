@@ -114,6 +114,26 @@
   .summary .pill.g{background:var(--good-soft);color:var(--good);border-color:var(--good)}
   .summary .pill.b{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
   .summary .pill.w{background:var(--warm-soft);color:var(--warm);border-color:var(--amber-400)}
+  .summary .pill.retest{background:var(--info-soft);color:var(--info);border-color:var(--info)}
+  /* clickable filter pills */
+  .pill.fbtn{cursor:pointer;font-weight:600;transition:box-shadow .12s,transform .05s}
+  .pill.fbtn:hover{filter:brightness(0.97)}
+  .pill.fbtn.active{box-shadow:0 0 0 2px currentColor inset,0 0 0 1px currentColor;transform:translateY(-1px)}
+  /* next-step banner: whose turn is it */
+  .nextStep{border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:14px;border:1px solid var(--line)}
+  .nextStep[data-jump]{cursor:pointer}
+  .nextStep b{font-family:var(--font-display)}
+  .nextStep .jumpHint{color:var(--subtle);font-size:12px;margin-left:6px}
+  .ns-you{background:var(--good-soft);border-color:var(--good);color:var(--leaf-700)}
+  .ns-claude{background:var(--bad-soft);border-color:var(--bad);color:var(--rust-700)}
+  .ns-test{background:var(--sunken)}
+  .ns-done{background:var(--info-soft);border-color:var(--info);color:var(--teal-500)}
+  /* Claude's per-item response badge */
+  .claudeBadge{font-size:13px;margin-top:5px;padding:5px 9px;border-radius:8px;line-height:1.4;font-weight:500}
+  .cs-working{background:var(--warm-soft);color:var(--warm)}
+  .cs-fixed{background:var(--good-soft);color:var(--leaf-700)}
+  .cs-roadmap{background:var(--info-soft);color:var(--teal-500)}
+  .cs-needinfo{background:var(--accent-soft);color:var(--clay-700)}
   textarea{width:100%}
   .hint{color:var(--subtle);font-size:13px;margin-bottom:14px}
   #sidebar h3{font-family:var(--font-display);color:var(--subtle);font-size:11px;
@@ -390,6 +410,28 @@ function currentRun(){
 // ---------------------------------------------------------------- render ----
 let activeTab = 'checklist';
 let mainView = 'run';   // 'run' | 'inbox'
+let statusFilter = null;   // null=show all | 'pass'|'fail'|'blocked'|'untested'|'retest'
+
+// Claude's per-item response state, written from a chat during triage:
+// results[key].claude = { state, note, at }. This is what makes the back-and-
+// forth legible — each state says whose turn it is next.
+const CLAUDE_STATE = {
+  working:  { label: 'Claude is on it',            cls: 'cs-working', next: 'claude' },
+  fixed:    { label: 'Claude fixed it — retest',   cls: 'cs-fixed',   next: 'you' },
+  roadmap:  { label: 'Claude roadmapped it',       cls: 'cs-roadmap', next: 'parked' },
+  'need-info':{ label: 'Claude needs a detail',    cls: 'cs-needinfo',next: 'you' },
+};
+function resultStatus(run, id){ return (run.results[id] || {}).status || 'untested'; }
+function resultClaude(run, id){ return (run.results[id] || {}).claude || null; }
+// items Claude fixed that you haven't re-verified yet = your retest queue
+function retestCount(run){
+  const g = currentGame(); let n = 0;
+  g.suite.forEach((p, pi) => p.items.forEach((it, ii) => {
+    const id = itemId(pi, ii), c = resultClaude(run, id);
+    if (c && c.state === 'fixed' && resultStatus(run, id) !== 'pass') n++;
+  }));
+  return n;
+}
 
 const TAG_LABEL = { bug: '🐞 bug', idea: '💡 idea', note: '📝 note' };
 const INBOX_STATUS = { new: 'new', roadmap: 'roadmapped', fixed: 'fixed', dismissed: 'dismissed' };
@@ -522,42 +564,78 @@ function renderMain(){
   }
 
   const counts = tallyResults(run);
+  // bucket the fail/blocked items by whose turn they're on next
+  let retest = 0, needInfo = 0, working = 0, freshFail = 0;
+  g.suite.forEach((p, pi) => p.items.forEach((it, ii) => {
+    const id = itemId(pi, ii), st = resultStatus(run, id);
+    if (st !== 'fail' && st !== 'blocked') return;
+    const c = resultClaude(run, id);
+    if (!c) freshFail++;
+    else if (c.state === 'fixed') retest++;
+    else if (c.state === 'need-info') needInfo++;
+    else if (c.state === 'working') working++;
+    // 'roadmap' = parked, nobody's immediate turn
+  }));
+  const F = f => statusFilter === f ? ' active' : '';     // active-filter marker
   html += `<div class="summary">
     <span class="pill mono">${run.build}</span>
-    <span>${new Date(run.date).toLocaleString()}</span>
-    <span class="pill g">✓ ${counts.pass} pass</span>
-    <span class="pill b">✗ ${counts.fail} fail</span>
-    <span class="pill w">⛔ ${counts.blocked} blocked</span>
-    <span class="pill">${counts.untested} untested</span>
     <span style="flex:1"></span>
-    <button id="copyClaudeBtn" class="btn-primary" title="Copies a message you can paste straight into a Claude chat">💬 Copy for Claude</button>
-  </div>
-  <div class="tabs">
+    <button class="pill g fbtn${F('pass')}" data-filter="pass">✓ ${counts.pass} pass</button>
+    <button class="pill b fbtn${F('fail')}" data-filter="fail">✗ ${counts.fail} fail</button>
+    <button class="pill w fbtn${F('blocked')}" data-filter="blocked">⛔ ${counts.blocked} blocked</button>
+    <button class="pill fbtn${F('untested')}" data-filter="untested">◦ ${counts.untested} untested</button>
+    ${retest ? `<button class="pill retest fbtn${F('retest')}" data-filter="retest">↩ ${retest} to retest</button>` : ''}
+  </div>`;
+  // next-step banner: says whose turn it is, plainly, in priority order
+  let step;
+  if (retest) step = { cls:'you', txt:`Your turn — Claude fixed ${retest} item${retest>1?'s':''}. Retest ${retest>1?'them':'it'} and mark pass or fail.`, filter:'retest' };
+  else if (needInfo) step = { cls:'you', txt:`Your turn — Claude needs a detail on ${needInfo} item${needInfo>1?'s':''}. Add a note, then tell Claude.`, filter:'fail' };
+  else if (freshFail) step = { cls:'claude', txt:`Claude's turn — ${freshFail} new fail${freshFail>1?'s':''} waiting. Say "triage it" in chat.`, filter:'fail' };
+  else if (working) step = { cls:'claude', txt:`Claude is working on ${working} item${working>1?'s':''}. You'll get a "retest" ping when they're fixed.`, filter:'fail' };
+  else if (counts.untested > 0) step = { cls:'test', txt:`${counts.untested} still to test. Play, then mark each pass/fail.`, filter:'untested' };
+  else step = { cls:'done', txt:`All items checked for this build. Start a new test when there's a new build.`, filter:null };
+  html += `<div class="nextStep ns-${step.cls}"${step.filter?` data-jump="${step.filter}"`:''}>
+    <b>Next:</b> ${step.txt}${step.filter?` <span class="jumpHint">show →</span>`:''}</div>`;
+  html += `<div class="tabs">
     <button data-tab="checklist" class="${activeTab==='checklist'?'active':''}">Checklist</button>
     <button data-tab="bugs" class="${activeTab==='bugs'?'active':''}">Bugs (${run.bugs.length})</button>
     <button data-tab="debrief" class="${activeTab==='debrief'?'active':''}">Debrief</button>
+    ${statusFilter ? `<span style="flex:1"></span><button id="clearFilter" class="pill">showing: ${statusFilter} ✕ clear</button>` : ''}
   </div>`;
 
   if (activeTab === 'checklist'){
+    const matches = (run, id) => {
+      if (!statusFilter) return true;
+      if (statusFilter === 'retest'){ const c = resultClaude(run, id); return c && c.state === 'fixed' && resultStatus(run, id) !== 'pass'; }
+      return resultStatus(run, id) === statusFilter;
+    };
+    let shown = 0;
     g.suite.forEach((p, pi) => {
+      const rows = p.items.map((it, ii) => ({ it, ii, id: itemId(pi, ii) })).filter(x => matches(run, x.id));
+      if (statusFilter && !rows.length) return;   // hide groups with nothing matching the filter
       html += `<div class="passGroup"><div class="passTitle">${p.pass}</div>`;
-      p.items.forEach((it, ii) => {
-        const id = itemId(pi, ii);
+      rows.forEach(({ it, ii, id }) => {
+        shown++;
         const r = run.results[id] || { status: 'untested', note: '' };
         const how = itemHow(it);
+        const c = r.claude ? CLAUDE_STATE[r.claude.state] : null;
         html += `<div class="item">
-          <button class="statusBtn ${r.status}" data-id="${id}">${r.status.toUpperCase()}</button>
+          <button class="statusBtn ${r.status}" data-id="${id}" title="click to cycle: untested → pass → fail → blocked">${r.status.toUpperCase()}</button>
           <div class="itemCol">
             <div class="txt">${itemTitle(it)}</div>
             ${how ? `<div class="how">${how}</div>` : ''}
+            ${c ? `<div class="claudeBadge ${c.cls}">↳ ${c.label}${r.claude.note ? `: ${escapeHtml(r.claude.note)}` : ''}</div>` : ''}
             <textarea class="note" data-id="${id}" placeholder="what you saw (optional)...">${r.note || ''}</textarea>
           </div>
           <button class="rmBtn" data-pi="${pi}" data-ii="${ii}" title="remove item">✕</button>
         </div>`;
       });
-      html += `<div class="addRow"><input placeholder="add a checklist item to this pass..." data-pi="${pi}" class="addItemInput">
-        <button class="addItemBtn" data-pi="${pi}">add</button></div></div>`;
+      if (!statusFilter)
+        html += `<div class="addRow"><input placeholder="add a checklist item to this pass..." data-pi="${pi}" class="addItemInput">
+          <button class="addItemBtn" data-pi="${pi}">add</button></div>`;
+      html += `</div>`;
     });
+    if (statusFilter && !shown) html += `<div class="hint">Nothing is "${statusFilter}" right now.</div>`;
   } else if (activeTab === 'bugs'){
     html += `<div class="bugCard" id="bugForm">
       <h3 style="margin-bottom:10px">Report a bug</h3>
@@ -685,6 +763,17 @@ function wireMainEvents(){
   };
 
   const run = currentRun(); if (!run) return;
+  // --- filter pills + next-step jump + clear ---
+  document.querySelectorAll('.fbtn[data-filter]').forEach(b => b.onclick = () => {
+    const f = b.dataset.filter;
+    statusFilter = statusFilter === f ? null : f;   // toggle off if same pill clicked
+    renderMain();
+  });
+  const nextStep = document.querySelector('.nextStep[data-jump]');
+  if (nextStep) nextStep.onclick = () => { statusFilter = nextStep.dataset.jump; renderMain(); };
+  const clearF = document.getElementById('clearFilter');
+  if (clearF) clearF.onclick = () => { statusFilter = null; renderMain(); };
+
   const copyBtn = document.getElementById('copyClaudeBtn');
   if (copyBtn) copyBtn.onclick = async () => {
     const msg = claudeMessage();
@@ -699,6 +788,8 @@ function wireMainEvents(){
     const id = b.dataset.id;
     const r = run.results[id] || { status: 'untested', note: '' };
     r.status = cycleStatus(r.status);
+    // your fresh verdict supersedes Claude's last response — clears the retest flag
+    if (r.claude) delete r.claude;
     run.results[id] = r;
     save(); renderMain(); renderRunList();
   });
