@@ -4,63 +4,110 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Playtest Tracker</title>
+<meta name="description" content="Playtest & QA tracker — reusable test suites, per-build runs, bug logging.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23C5511F'/%3E%3Cpath d='M28 52l16 16 30-34' stroke='%23FFF8F2' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
+  /* Grain design system (shared with Analyst Prep Kit): warm clay-on-cream,
+     Space Grotesk headings / IBM Plex Sans body / IBM Plex Mono for builds. */
   :root{
-    --bg:#0a0d12; --panel:#12161d; --panel2:#171c24; --line:rgba(255,255,255,0.08);
-    --text:#e8dcc0; --muted:#8a94a6; --accent:#7ce8a8; --gold:#e8c76a;
-    --fail:#e86a6a; --blocked:#c8a8e8; --untested:#3a3f48;
+    --stone-50:#FAF6EF; --stone-100:#F1E9DC; --stone-200:#E4D7C4; --stone-300:#CDBA9F;
+    --stone-500:#80705E; --stone-600:#5F5244; --stone-900:#1C1712;
+    --clay-50:#FCEFE8; --clay-200:#F0B196; --clay-500:#C5511F; --clay-600:#A5411A; --clay-700:#813218;
+    --amber-50:#FDF3E0; --amber-200:#F3C877; --amber-400:#DC9617; --amber-600:#97640C;
+    --leaf-50:#ECF2E2; --leaf-500:#557A30; --leaf-700:#3A5320;
+    --rust-50:#FAE3DB; --rust-500:#BE3B22; --rust-700:#872614;
+    --teal-50:#DFEDEC; --teal-500:#2A6E72;
+
+    --bg:var(--stone-50); --panel:#FFFDFA; --sunken:var(--stone-100); --line:var(--stone-200);
+    --text:var(--stone-900); --muted:var(--stone-600); --subtle:var(--stone-500);
+    --accent:var(--clay-500); --accent-h:var(--clay-600); --accent-soft:var(--clay-50);
+    --good:var(--leaf-500); --good-soft:var(--leaf-50);
+    --bad:var(--rust-500); --bad-soft:var(--rust-50);
+    --warm:var(--amber-600); --warm-soft:var(--amber-50);
+    --info:var(--teal-500); --info-soft:var(--teal-50);
+    --font-display:'Space Grotesk','IBM Plex Sans',system-ui,sans-serif;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+    --shadow:0 1px 2px rgba(28,23,18,0.05),0 4px 12px rgba(28,23,18,0.06);
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;
-    height:100vh;overflow:hidden}
-  button, select, input, textarea{font-family:inherit;color:var(--text);background:var(--panel2);
-    border:1px solid var(--line);border-radius:6px;padding:6px 10px}
-  button{cursor:pointer}
-  button:hover{border-color:var(--accent)}
-  h1,h2,h3{margin:0 0 8px;font-weight:bold}
-  #app{display:grid;grid-template-columns:260px 1fr;grid-template-rows:auto 1fr;height:100vh}
-  #topbar{grid-column:1/3;display:flex;align-items:center;gap:10px;padding:10px 16px;
-    background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
-  #topbar h1{font-size:18px;color:var(--accent);margin:0 16px 0 0}
-  #sidebar{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:12px}
-  #main{overflow-y:auto;padding:20px 28px}
-  .runItem{padding:8px 10px;border-radius:6px;margin-bottom:6px;cursor:pointer;border:1px solid transparent;
-    font-size:13px}
-  .runItem:hover{border-color:var(--line)}
-  .runItem.active{background:var(--panel2);border-color:var(--accent)}
-  .runItem .meta{color:var(--muted);font-size:11px}
-  .passGroup{margin-bottom:22px}
-  .passTitle{font-size:15px;color:var(--gold);border-bottom:1px solid var(--line);padding-bottom:4px;
-    margin-bottom:10px}
-  .item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans);
+    font-size:15px;line-height:1.5;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  button, select, input, textarea{font-family:var(--font-sans);font-size:14px;color:var(--text);
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 12px}
+  button{cursor:pointer;font-weight:500;transition:background .12s,border-color .12s,color .12s}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+    outline:none;box-shadow:0 0 0 3px rgba(197,81,31,0.28);border-color:var(--accent)}
+  h1,h2,h3{margin:0 0 8px;font-family:var(--font-display);font-weight:600;letter-spacing:-0.01em}
+  #app{display:grid;grid-template-columns:280px 1fr;grid-template-rows:auto 1fr;height:100vh}
+  #topbar{grid-column:1/3;display:flex;align-items:center;gap:10px;padding:12px 20px;
+    background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;box-shadow:var(--shadow)}
+  #topbar h1{font-size:19px;color:var(--accent);margin:0 14px 0 0;font-weight:700;
+    display:flex;align-items:center;gap:8px}
+  #topbar h1::before{content:'';width:22px;height:22px;border-radius:6px;background:var(--accent);
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M28 52l16 16 30-34' stroke='black' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/70% no-repeat;
+    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M28 52l16 16 30-34' stroke='black' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/70% no-repeat}
+  .btn-primary{background:var(--accent);color:#FFF8F2;border-color:var(--accent)}
+  .btn-primary:hover{background:var(--accent-h);border-color:var(--accent-h);color:#FFF8F2}
+  #sidebar{background:var(--sunken);border-right:1px solid var(--line);overflow-y:auto;padding:14px}
+  #main{overflow-y:auto;padding:24px 32px;background:var(--bg)}
+  .runItem{padding:10px 12px;border-radius:10px;margin-bottom:7px;cursor:pointer;
+    border:1px solid var(--line);background:var(--panel);font-size:13px;transition:border-color .12s,box-shadow .12s}
+  .runItem:hover{border-color:var(--stone-300)}
+  .runItem.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .runItem .build{font-family:var(--font-mono);font-weight:500;font-size:13px}
+  .runItem .meta{color:var(--subtle);font-size:11px;margin-top:2px}
+  .passGroup{margin-bottom:24px}
+  .passTitle{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--accent);
+    border-bottom:2px solid var(--line);padding-bottom:6px;margin-bottom:10px}
+  .item{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
   .item .txt{flex:1;padding-top:6px}
-  .statusBtn{width:96px;text-align:center;font-size:12px;font-weight:bold;flex-shrink:0}
-  .statusBtn.untested{background:var(--panel2);color:var(--muted)}
-  .statusBtn.pass{background:rgba(124,232,168,0.18);color:var(--accent);border-color:var(--accent)}
-  .statusBtn.fail{background:rgba(232,106,106,0.18);color:var(--fail);border-color:var(--fail)}
-  .statusBtn.blocked{background:rgba(200,168,232,0.18);color:var(--blocked);border-color:var(--blocked)}
-  .note{width:100%;min-height:32px;font-size:12px;margin-top:4px;resize:vertical}
+  .statusBtn{width:100px;text-align:center;font-size:12px;font-weight:600;flex-shrink:0;letter-spacing:0.02em}
+  .statusBtn.untested{background:var(--sunken);color:var(--subtle);border-color:var(--line)}
+  .statusBtn.pass{background:var(--good-soft);color:var(--good);border-color:var(--good)}
+  .statusBtn.fail{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+  .statusBtn.blocked{background:var(--warm-soft);color:var(--warm);border-color:var(--amber-400)}
+  .statusBtn:hover{color:inherit;filter:brightness(0.97)}
+  .note{width:100%;min-height:34px;font-size:13px;margin-top:5px;resize:vertical;background:var(--bg)}
   .itemCol{flex:1}
-  .rmBtn{color:var(--fail);border-color:transparent;background:none;font-size:12px}
-  .bugCard{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px}
-  .bugCard .sev{font-size:11px;font-weight:bold;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px}
-  .sev-Blocker{background:rgba(232,106,106,0.3);color:var(--fail)}
-  .sev-Critical{background:rgba(232,150,106,0.3);color:#e8a06a}
-  .sev-Major{background:rgba(232,199,106,0.25);color:var(--gold)}
-  .sev-Minor{background:rgba(140,148,166,0.25);color:var(--muted)}
-  .sev-Cosmetic{background:rgba(140,148,166,0.12);color:var(--muted)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
-  .field label{font-size:11px;color:var(--muted)}
-  .tabs{display:flex;gap:6px;margin-bottom:16px}
-  .tabs button{opacity:0.55}
-  .tabs button.active{opacity:1;border-color:var(--accent);color:var(--accent)}
-  .addRow{display:flex;gap:8px;margin-top:8px}
+  .rmBtn{color:var(--bad);border-color:transparent;background:none;font-size:12px;padding:4px 8px}
+  .rmBtn:hover{color:var(--bad);background:var(--bad-soft);border-color:transparent}
+  .bugCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;
+    margin-bottom:12px;box-shadow:var(--shadow)}
+  .bugCard .sev{font-family:var(--font-mono);font-size:11px;font-weight:600;padding:2px 9px;
+    border-radius:20px;display:inline-block;margin-bottom:8px;letter-spacing:0.03em}
+  .sev-Blocker{background:var(--bad-soft);color:var(--bad-700,#872614)}
+  .sev-Critical{background:var(--clay-50);color:var(--clay-700)}
+  .sev-Major{background:var(--warm-soft);color:var(--amber-600)}
+  .sev-Minor{background:var(--sunken);color:var(--muted)}
+  .sev-Cosmetic{background:var(--sunken);color:var(--subtle)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+  .field label{font-size:12px;color:var(--muted);font-weight:500}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:2px}
+  .tabs button{background:none;border:none;border-radius:0;border-bottom:2px solid transparent;
+    color:var(--muted);padding:8px 4px;font-weight:600}
+  .tabs button:hover{color:var(--accent)}
+  .tabs button.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .addRow{display:flex;gap:8px;margin-top:10px}
   .addRow input{flex:1}
-  .summary{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-bottom:16px}
-  .summary b{color:var(--text)}
+  .summary{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:18px;align-items:center}
+  .summary .pill{padding:4px 10px;border-radius:20px;background:var(--panel);border:1px solid var(--line);font-weight:500}
+  .summary .pill.mono{font-family:var(--font-mono);color:var(--text)}
+  .summary .pill.g{background:var(--good-soft);color:var(--good);border-color:var(--good)}
+  .summary .pill.b{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+  .summary .pill.w{background:var(--warm-soft);color:var(--warm);border-color:var(--amber-400)}
   textarea{width:100%}
-  .hint{color:var(--muted);font-size:12px;margin-bottom:14px}
+  .hint{color:var(--subtle);font-size:13px;margin-bottom:14px}
+  #sidebar h3{font-family:var(--font-display);color:var(--subtle);font-size:11px;
+    letter-spacing:0.08em;text-transform:uppercase;font-weight:600}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--stone-300);border-radius:10px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
@@ -73,11 +120,11 @@
     <span id="pullStatus" class="hint" style="margin:0"></span>
     <span style="width:1px;height:20px;background:var(--line)"></span>
     <input id="buildInput" placeholder="build / task # (e.g. JF-#038)" style="width:220px">
-    <button id="newRunBtn">Start New Run</button>
+    <button id="newRunBtn" class="btn-primary">Start New Run</button>
     <span style="flex:1"></span>
     <button id="exportBtn">Export JSON</button>
     <button id="exportMdBtn">Export run as Markdown</button>
-    <label style="border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer">
+    <label style="border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:14px;font-weight:500">
       Import JSON <input id="importInput" type="file" accept="application/json" style="display:none">
     </label>
   </div>
@@ -230,8 +277,8 @@ function renderRunList(){
     const div = document.createElement('div');
     div.className = 'runItem' + (run && r.id === run.id ? ' active' : '');
     const counts = tallyResults(r);
-    div.innerHTML = `<div>${r.build}</div><div class="meta">${new Date(r.date).toLocaleString()}</div>
-      <div class="meta">✓${counts.pass} ✗${counts.fail} ⛔${counts.blocked} · ${r.bugs.length} bug${r.bugs.length===1?'':'s'}</div>`;
+    div.innerHTML = `<div class="build">${r.build}</div><div class="meta">${new Date(r.date).toLocaleString()}</div>
+      <div class="meta">✓${counts.pass} · ✗${counts.fail} · ⛔${counts.blocked} · ${r.bugs.length} bug${r.bugs.length===1?'':'s'}</div>`;
     div.onclick = () => { STATE.currentRun[STATE.currentGame] = r.id; save(); renderAll(); };
     list.appendChild(div);
   });
@@ -255,12 +302,12 @@ function renderMain(){
 
   const counts = tallyResults(run);
   let html = `<div class="summary">
-    <div><b>${run.build}</b></div>
-    <div>${new Date(run.date).toLocaleString()}</div>
-    <div style="color:var(--accent)">✓ ${counts.pass} pass</div>
-    <div style="color:var(--fail)">✗ ${counts.fail} fail</div>
-    <div style="color:var(--blocked)">⛔ ${counts.blocked} blocked</div>
-    <div>${counts.untested} untested</div>
+    <span class="pill mono">${run.build}</span>
+    <span>${new Date(run.date).toLocaleString()}</span>
+    <span class="pill g">✓ ${counts.pass} pass</span>
+    <span class="pill b">✗ ${counts.fail} fail</span>
+    <span class="pill w">⛔ ${counts.blocked} blocked</span>
+    <span class="pill">${counts.untested} untested</span>
   </div>
   <div class="tabs">
     <button data-tab="checklist" class="${activeTab==='checklist'?'active':''}">Checklist</button>
@@ -302,7 +349,7 @@ function renderMain(){
         <div class="field"><label>Expected</label><textarea id="bugExpected"></textarea></div>
         <div class="field"><label>Actual</label><textarea id="bugActual"></textarea></div>
       </div>
-      <button id="addBugBtn">Add bug</button>
+      <button id="addBugBtn" class="btn-primary">Add bug</button>
     </div>`;
     run.bugs.forEach(b => {
       html += `<div class="bugCard">
