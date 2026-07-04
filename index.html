@@ -69,6 +69,8 @@
     <h1>Playtest Tracker</h1>
     <select id="gameSel"></select>
     <button id="newGameBtn">+ new game</button>
+    <button id="pullBtn" title="Re-fetch data/&lt;game&gt;.json from this repo — picks up anything Claude committed in a chat">⭯ Pull latest</button>
+    <span id="pullStatus" class="hint" style="margin:0"></span>
     <span style="width:1px;height:20px;background:var(--line)"></span>
     <input id="buildInput" placeholder="build / task # (e.g. JF-#038)" style="width:220px">
     <button id="newRunBtn">Start New Run</button>
@@ -143,6 +145,47 @@ function uid(){ return Date.now().toString(36) + Math.random().toString(36).slic
 
 function ensureGame(name){
   if (!STATE.games[name]) STATE.games[name] = { suite: JSON.parse(JSON.stringify(DEFAULT_SUITE)), runs: [] };
+}
+
+// -------------------------------------------------------------- git sync ----
+// One-way sync: a Claude chat session commits data/<game>.json directly to
+// this (now public) repo when you give feedback in conversation; this app
+// only ever READS that file (a static page can't safely hold a GitHub write
+// token in public code, so it never pushes on its own). "Pull latest" and
+// the auto-pull-on-load below are how the browser's local view catches up.
+async function fetchGameFile(name){
+  try {
+    const res = await fetch('data/' + encodeURIComponent(name) + '.json', { cache: 'no-store' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch(e){ return null; }
+}
+async function fetchIndex(){
+  try {
+    const res = await fetch('data/index.json', { cache: 'no-store' });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch(e){ return []; }
+}
+// merge-by-id so a pull never silently drops runs only present in one side
+function mergeGame(local, incoming){
+  if (!incoming) return local;
+  if (!local) return incoming;
+  const byId = new Map();
+  [...incoming.runs, ...local.runs].forEach(r => byId.set(r.id, r));
+  const runs = [...byId.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
+  return { suite: incoming.suite || local.suite, runs };
+}
+async function pullGame(name, silent){
+  const status = document.getElementById('pullStatus');
+  if (status) status.textContent = 'pulling...';
+  const incoming = await fetchGameFile(name);
+  if (incoming){
+    STATE.games[name] = mergeGame(STATE.games[name], incoming);
+    save();
+    if (status) status.textContent = 'pulled ' + new Date().toLocaleTimeString();
+  } else if (status) status.textContent = silent ? '' : 'no data/' + name + '.json yet';
+  return incoming;
 }
 function newRun(gameName, build){
   const g = STATE.games[gameName];
@@ -413,11 +456,28 @@ document.getElementById('importInput').onchange = e => {
   reader.readAsText(file);
 };
 
+document.getElementById('pullBtn').onclick = async () => {
+  if (!STATE.currentGame){ alert('Create or select a game first.'); return; }
+  await pullGame(STATE.currentGame, false);
+  renderAll();
+};
+
 if (!STATE.currentGame || !STATE.games[STATE.currentGame]) {
   const names = Object.keys(STATE.games);
   if (names.length) STATE.currentGame = names[0];
 }
 renderAll();
+
+// JF-style startup sync: pull the index of known games (so games Claude has
+// already committed data for show up even on a browser that's never touched
+// them), ensure a local shell for each, then silently pull the current one.
+(async () => {
+  const names = await fetchIndex();
+  names.forEach(n => ensureGame(n));
+  if (!STATE.currentGame && names.length) STATE.currentGame = names[0];
+  if (STATE.currentGame){ await pullGame(STATE.currentGame, true); }
+  save(); renderAll();
+})();
 </script>
 </body>
 </html>
