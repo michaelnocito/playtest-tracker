@@ -294,6 +294,11 @@ function uid(){ return Date.now().toString(36) + Math.random().toString(36).slic
 function ensureGame(name){
   if (!STATE.games[name]) STATE.games[name] = { suite: JSON.parse(JSON.stringify(DEFAULT_SUITE)), runs: [], inbox: [] };
   if (!STATE.games[name].inbox) STATE.games[name].inbox = [];   // back-fill older games
+  // where to pull the roadmap from: a public GitHub repo + the folder inside it
+  // that holds this game's *_HANDOFF.md / *_DEV_NOTES.md. Defaults assume the
+  // play-area monorepo convention (folder named after the game); editable per
+  // game in the Roadmap tab for anything that lives in its own repo.
+  if (!STATE.games[name].roadmap) STATE.games[name].roadmap = { repo: 'michaelnocito/play-area', path: name, file: null, md: '', fetchedAt: null, error: '' };
 }
 // Feedback inbox item: { id, text, tag:'bug'|'idea'|'note'|'strength', status:'new'|
 // 'roadmap'|'fixed'|'dismissed', date, note }. Capture is one line; triage
@@ -384,7 +389,7 @@ function mergeGame(local, incoming){
   const inboxById = new Map();
   [...(local.inbox||[]), ...(incoming.inbox||[])].forEach(i => inboxById.set(i.id, i));
   const inbox = [...inboxById.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
-  return { suite: incoming.suite || local.suite, runs, inbox };
+  return { suite: incoming.suite || local.suite, runs, inbox, roadmap: local.roadmap || incoming.roadmap };
 }
 function persistLocal(){ localStorage.setItem(KEY, JSON.stringify(STATE)); }   // save without re-pushing to cloud
 async function pullGame(name, silent){
@@ -499,6 +504,64 @@ function inboxViewHTML(g){
   return html + '</div>';
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ------------------------------------------------------------ roadmap (GH) --
+// Pulls a game's roadmap straight from its GitHub repo: lists the folder,
+// picks the best *_HANDOFF.md / *_DEV_NOTES.md / *ROADMAP*.md, downloads it,
+// and keeps just the "## ROADMAP" section (or the whole file if none is found).
+async function fetchRoadmap(g){
+  const src = g.roadmap;
+  src.error = '';
+  try {
+    const api = `https://api.github.com/repos/${src.repo}/contents/${src.path}`;
+    const res = await fetch(api);
+    if (!res.ok) throw new Error(`repo/path not found (HTTP ${res.status}) — check the owner/repo and folder above`);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error('that path is a file, not a folder');
+    const md = files.filter(f => f.type === 'file' && /\.md$/i.test(f.name));
+    const pick = md.find(f => /HANDOFF/i.test(f.name)) || md.find(f => /DEV_NOTES/i.test(f.name)) || md.find(f => /ROADMAP/i.test(f.name));
+    if (!pick) throw new Error('no *_HANDOFF.md / *_DEV_NOTES.md / *ROADMAP*.md file found in that folder');
+    const mdRes = await fetch(pick.download_url);
+    const text = await mdRes.text();
+    src.file = pick.name;
+    src.md = extractRoadmapSection(text);
+    src.fetchedAt = new Date().toISOString();
+  } catch(e){ src.error = e.message || String(e); }
+  save();
+}
+// Grab the "## ROADMAP" heading through the next heading of equal-or-shallower
+// depth; if the file doesn't have one, fall back to the whole doc (capped).
+function extractRoadmapSection(text){
+  const lines = text.split('\n');
+  const startIdx = lines.findIndex(l => /^#{1,6}\s*ROADMAP\b/i.test(l.trim()));
+  if (startIdx === -1) return text.slice(0, 8000);
+  const depth = lines[startIdx].match(/^#+/)[0].length;
+  let endIdx = lines.length;
+  for (let i = startIdx + 1; i < lines.length; i++){
+    const h = lines[i].match(/^(#{1,6})\s/);
+    if (h && h[1].length <= depth){ endIdx = i; break; }
+  }
+  return lines.slice(startIdx, endIdx).join('\n').trim();
+}
+// Minimal markdown → HTML, just enough for handoff docs (headings, bold,
+// strikethrough, code, links, bullets) — not a general parser, escapes first.
+function mdLite(md){
+  const esc = escapeHtml(md);
+  return esc.split('\n').map(line => {
+    const h = line.match(/^(#{1,6})\s+(.*)/);
+    if (h) return `<div style="font-family:var(--font-display);font-weight:600;margin:12px 0 4px;font-size:${Math.max(13,16-h[1].length)}px;color:var(--info)">${h[2]}</div>`;
+    if (/^---+\s*$/.test(line.trim())) return '<hr style="border:none;border-top:1px solid var(--line);margin:12px 0">';
+    let l = line
+      .replace(/~~(.+?)~~/g, '<del style="opacity:0.55">$1</del>')
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/`([^`]+)`/g, '<code style="background:var(--sunken);padding:1px 5px;border-radius:4px">$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    const li = l.match(/^(\s*)[-*]\s+(.*)/);
+    if (li) return `<div style="padding-left:${li[1].length ? 18 : 6}px;margin:3px 0">• ${li[2]}</div>`;
+    if (!l.trim()) return '<div style="height:6px"></div>';
+    return `<div style="margin:2px 0">${l}</div>`;
+  }).join('');
+}
 
 function itemId(passIdx, itemIdx){ return passIdx + ':' + itemIdx; }
 
@@ -634,6 +697,7 @@ function renderMain(){
     <button data-tab="checklist" class="${activeTab==='checklist'?'active':''}">Checklist</button>
     <button data-tab="bugs" class="${activeTab==='bugs'?'active':''}">Bugs (${run.bugs.length})</button>
     <button data-tab="debrief" class="${activeTab==='debrief'?'active':''}">Debrief</button>
+    <button data-tab="roadmap" class="${activeTab==='roadmap'?'active':''}">🗺️ Roadmap</button>
     ${statusFilter ? `<span style="flex:1"></span><button id="clearFilter" class="pill">showing: ${statusFilter} ✕ clear</button>` : ''}
   </div>`;
 
@@ -726,6 +790,20 @@ function renderMain(){
       html += `<div class="field"><label>${q}</label>
         <textarea data-debrief="${k}" rows="2">${run.debrief[k] || ''}</textarea></div>`;
     });
+  } else if (activeTab === 'roadmap'){
+    const rm = g.roadmap;
+    html += `<p class="hint">Pulled straight from GitHub — the ${'`'}## ROADMAP${'`'} section of that game's HANDOFF/DEV_NOTES doc, not stored here.</p>
+    <div class="grid2">
+      <div class="field"><label>Repo (owner/repo)</label><input id="rmRepo" value="${escapeHtml(rm.repo)}"></div>
+      <div class="field"><label>Folder in that repo</label><input id="rmPath" value="${escapeHtml(rm.path)}"></div>
+    </div>
+    <button id="rmSaveBtn">Save source</button>
+    <button id="rmPullBtn" class="btn-primary">🔄 Pull roadmap from GitHub</button>
+    <span class="hint" style="margin-left:8px">${rm.file ? `from ${escapeHtml(rm.file)}` : ''}${rm.fetchedAt ? ' · pulled ' + new Date(rm.fetchedAt).toLocaleString() : ''}</span>
+    ${rm.error ? `<div class="hint" style="color:var(--bad);margin-top:8px">⚠ ${escapeHtml(rm.error)}</div>` : ''}
+    <div style="margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px">
+      ${rm.md ? mdLite(rm.md) : '<div class="hint">Nothing pulled yet — click "Pull roadmap from GitHub" above.</div>'}
+    </div>`;
   }
   main.innerHTML = html;
   wireMainEvents();
@@ -896,6 +974,24 @@ function wireMainEvents(){
     p.retired = true; p.completedBuild = run.build; p.completedDate = new Date().toISOString();
     save(); renderMain();
   });
+
+  // --- roadmap tab (pulled from GitHub) ---
+  const rmSaveBtn = document.getElementById('rmSaveBtn');
+  if (rmSaveBtn) rmSaveBtn.onclick = () => {
+    const g = currentGame();
+    g.roadmap.repo = document.getElementById('rmRepo').value.trim();
+    g.roadmap.path = document.getElementById('rmPath').value.trim();
+    save(); renderMain();
+  };
+  const rmPullBtn = document.getElementById('rmPullBtn');
+  if (rmPullBtn) rmPullBtn.onclick = async () => {
+    const g = currentGame();
+    g.roadmap.repo = document.getElementById('rmRepo').value.trim() || g.roadmap.repo;
+    g.roadmap.path = document.getElementById('rmPath').value.trim() || g.roadmap.path;
+    rmPullBtn.textContent = 'Pulling…'; rmPullBtn.disabled = true;
+    await fetchRoadmap(g);
+    renderMain();
+  };
 }
 
 function renderAll(){ renderGameSelect(); renderRunList(); renderMain(); }
@@ -984,6 +1080,7 @@ document.getElementById('pullBtn').onclick = async () => {
   renderAll();
 };
 
+Object.keys(STATE.games).forEach(ensureGame);   // back-fill inbox/roadmap on games saved before those existed
 if (!STATE.currentGame || !STATE.games[STATE.currentGame]) {
   const names = Object.keys(STATE.games);
   if (names.length) STATE.currentGame = names[0];
@@ -996,7 +1093,7 @@ renderAll();
 (async () => {
   const rows = await sbPullAll();
   if (rows && rows.length){
-    rows.forEach(r => { STATE.games[r.name] = mergeGame(STATE.games[r.name], r.data); });
+    rows.forEach(r => { STATE.games[r.name] = mergeGame(STATE.games[r.name], r.data); ensureGame(r.name); });
     setPullStatus('synced ' + new Date().toLocaleTimeString());
   } else {
     // fallback path (Supabase down or table not created yet)
