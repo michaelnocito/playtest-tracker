@@ -411,6 +411,7 @@ function currentRun(){
 let activeTab = 'checklist';
 let mainView = 'run';   // 'run' | 'inbox'
 let statusFilter = null;   // null=show all | 'pass'|'fail'|'blocked'|'untested'|'retest'
+let stickyId = null;       // a row you're actively cycling stays visible under a filter until you move on
 
 // Claude's per-item response state, written from a chat during triage:
 // results[key].claude = { state, note, at }. This is what makes the back-and-
@@ -606,6 +607,7 @@ function renderMain(){
   if (activeTab === 'checklist'){
     const matches = (run, id) => {
       if (!statusFilter) return true;
+      if (id === stickyId) return true;   // keep an actively-cycled row from vanishing mid-edit
       if (statusFilter === 'retest'){ const c = resultClaude(run, id); return c && c.state === 'fixed' && resultStatus(run, id) !== 'pass'; }
       return resultStatus(run, id) === statusFilter;
     };
@@ -767,12 +769,13 @@ function wireMainEvents(){
   document.querySelectorAll('.fbtn[data-filter]').forEach(b => b.onclick = () => {
     const f = b.dataset.filter;
     statusFilter = statusFilter === f ? null : f;   // toggle off if same pill clicked
+    stickyId = null;   // switching filters drops any pinned row
     renderMain();
   });
   const nextStep = document.querySelector('.nextStep[data-jump]');
-  if (nextStep) nextStep.onclick = () => { statusFilter = nextStep.dataset.jump; renderMain(); };
+  if (nextStep) nextStep.onclick = () => { statusFilter = nextStep.dataset.jump; stickyId = null; renderMain(); };
   const clearF = document.getElementById('clearFilter');
-  if (clearF) clearF.onclick = () => { statusFilter = null; renderMain(); };
+  if (clearF) clearF.onclick = () => { statusFilter = null; stickyId = null; renderMain(); };
 
   const copyBtn = document.getElementById('copyClaudeBtn');
   if (copyBtn) copyBtn.onclick = async () => {
@@ -791,6 +794,7 @@ function wireMainEvents(){
     // your fresh verdict supersedes Claude's last response — clears the retest flag
     if (r.claude) delete r.claude;
     run.results[id] = r;
+    if (statusFilter) stickyId = id;   // stay visible so you can keep cycling to fail/blocked under a filter
     save(); renderMain(); renderRunList();
   });
   document.querySelectorAll('.note').forEach(n => n.onchange = () => {
