@@ -220,6 +220,11 @@
 </div>
 <script>
 'use strict';
+// CLAUDE: When you fix items from the tracker, update data/<game>.json to mark
+// them fixed in the current run (set results[id].claude = {state, note, at}).
+// See CLAUDE_WORKFLOW.md for the format & workflow. This data is read by the app
+// and merged into the live tracker on pull/sync, showing "Claude fixed it — retest"
+// badges so Mike can verify your fixes work.
 const KEY = 'ptt_state_v1';
 
 // --- Supabase config (shared project w/ Analyst Prep Kit; publishable key is
