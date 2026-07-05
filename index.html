@@ -167,6 +167,7 @@
   .tag-bug{background:var(--bad-soft);color:var(--bad)}
   .tag-idea{background:var(--warm-soft);color:var(--warm)}
   .tag-note{background:var(--sunken);color:var(--muted)}
+  .tag-strength{background:var(--good-soft);color:var(--good)}
   .istatus{color:var(--subtle)}
   .idate{color:var(--subtle);margin-left:auto;margin-right:4px}
   .itext{font-weight:500;line-height:1.5}
@@ -289,9 +290,13 @@ function ensureGame(name){
   if (!STATE.games[name]) STATE.games[name] = { suite: JSON.parse(JSON.stringify(DEFAULT_SUITE)), runs: [], inbox: [] };
   if (!STATE.games[name].inbox) STATE.games[name].inbox = [];   // back-fill older games
 }
-// Feedback inbox item: { id, text, tag:'bug'|'idea'|'note', status:'new'|
+// Feedback inbox item: { id, text, tag:'bug'|'idea'|'note'|'strength', status:'new'|
 // 'roadmap'|'fixed'|'dismissed', date, note }. Capture is one line; triage
 // (setting tag/status) happens later, matching how studios split the two.
+// 'strength' = something that landed well (a pass-with-a-good-note, or anything
+// you noticed working). It gets triaged to 'roadmap' the same as an idea, but
+// keeps its tag so it shows up as "build on this" rather than "fix this" — see
+// GAME_BIBLE.md Part 3: build on strengths first, spend leftover effort elsewhere.
 function addInbox(gameName, text, tag){
   const g = STATE.games[gameName]; if (!g) return;
   if (!g.inbox) g.inbox = [];
@@ -434,7 +439,7 @@ function retestCount(run){
   return n;
 }
 
-const TAG_LABEL = { bug: '🐞 bug', idea: '💡 idea', note: '📝 note' };
+const TAG_LABEL = { bug: '🐞 bug', idea: '💡 idea', note: '📝 note', strength: '👍 strength' };
 const INBOX_STATUS = { new: 'new', roadmap: 'roadmapped', fixed: 'fixed', dismissed: 'dismissed' };
 
 // Always-on quick capture: type a line, tag it, hit add. Zero navigation so it
@@ -446,6 +451,7 @@ function captureBarHTML(){
     <select id="capTag" title="what kind of thing is this?">
       <option value="bug">🐞 bug</option>
       <option value="idea">💡 idea</option>
+      <option value="strength">👍 strength — this landed well</option>
       <option value="note" selected>📝 note</option>
     </select>
     <button id="capAdd" class="btn-primary">Add</button>
@@ -455,13 +461,14 @@ function captureBarHTML(){
 function inboxViewHTML(g){
   const inbox = g.inbox || [];
   const nNew = inbox.filter(i => i.status === 'new').length;
+  const nStrength = inbox.filter(i => i.tag === 'strength' && i.status !== 'dismissed').length;
   let html = `<div class="summary">
     <span class="pill mono">Feedback inbox</span>
-    <span>${inbox.length} item${inbox.length===1?'':'s'} · ${nNew} untriaged</span>
+    <span>${inbox.length} item${inbox.length===1?'':'s'} · ${nNew} untriaged${nStrength ? ` · <span style="color:var(--good)">👍 ${nStrength} strength${nStrength===1?'':'s'} to build on</span>` : ''}</span>
     <span style="flex:1"></span>
     <button id="copyInboxBtn" class="btn-primary" title="Copy the untriaged items to paste into a Claude chat">💬 Send untriaged to Claude</button>
   </div>
-  <p class="hint">Capture anything above while you play. Later, triage each item: send bugs to be fixed, ideas to the roadmap, or mark them done. Claude reads this list live and acts on it in your next chat.</p>`;
+  <p class="hint">Capture anything above while you play — including what's working (👍 strength). Later, triage each item: send bugs to be fixed, ideas/strengths to the roadmap, or mark them done. Build on strengths first — they're the priority; non-strengths get whatever effort is left over. Claude reads this list live and acts on it in your next chat.</p>`;
   if (!inbox.length) return html + '<div class="hint">Nothing captured yet. Use the bar up top while you test.</div>';
   html += '<div class="inboxList">';
   inbox.forEach(it => {
@@ -475,8 +482,10 @@ function inboxViewHTML(g){
       <div class="itext">${escapeHtml(it.text)}</div>
       ${it.note ? `<div class="how">Claude: ${escapeHtml(it.note)}</div>` : ''}
       <div class="triage">
-        <button data-tri="bug" data-id="${it.id}">→ 🐞 Bug</button>
-        <button data-tri="roadmap" data-id="${it.id}">→ 🗺️ Roadmap</button>
+        ${it.tag === 'strength'
+          ? `<button data-tri="build" data-id="${it.id}">→ 🌱 Build on it</button>`
+          : `<button data-tri="bug" data-id="${it.id}">→ 🐞 Bug</button>
+             <button data-tri="roadmap" data-id="${it.id}">→ 🗺️ Roadmap</button>`}
         <button data-tri="fixed" data-id="${it.id}">✓ Fixed</button>
         <button data-tri="dismissed" data-id="${it.id}">Dismiss</button>
       </div>
@@ -690,8 +699,12 @@ function inboxMessage(){
   const g = currentGame(); if (!g) return '';
   const items = (g.inbox || []).filter(i => i.status === 'new');
   if (!items.length) return `No untriaged feedback for ${STATE.currentGame} right now.`;
-  const lines = [`Here's my untriaged feedback for ${STATE.currentGame}. Please triage each one: fix the bugs, add the ideas to the roadmap, and mark them in the tracker (game "${STATE.currentGame}" in Supabase). Then commit any code/doc changes.`, ``];
-  items.forEach(i => lines.push(`- (${i.tag}) ${i.text}`));
+  const strengths = items.filter(i => i.tag === 'strength');
+  const rest = items.filter(i => i.tag !== 'strength');
+  const lines = [`Here's my untriaged feedback for ${STATE.currentGame}. Please triage each one: fix the bugs, add the ideas to the roadmap, and mark them in the tracker (game "${STATE.currentGame}" in Supabase). Then commit any code/doc changes.`,
+    `Build on strengths first (per GAME_BIBLE.md) — figure out how to lean into what's already landing well before spending effort on non-strengths.`, ``];
+  if (strengths.length){ lines.push(`Strengths to build on:`); strengths.forEach(i => lines.push(`- ${i.text}`)); lines.push(``); }
+  if (rest.length){ lines.push(`Everything else:`); rest.forEach(i => lines.push(`- (${i.tag}) ${i.text}`)); }
   return lines.join('\n');
 }
 
@@ -719,7 +732,10 @@ function claudeMessage(){
   }
   const dbEntries = Object.entries(run.debrief).filter(([,v]) => v);
   if (dbEntries.length){ lines.push(``, `My notes:`); dbEntries.forEach(([,v]) => lines.push('- ' + v)); }
-  if (notes.length){ lines.push(``, `Passed with notes:`); notes.forEach(n => lines.push('- ' + n)); }
+  if (notes.length){
+    lines.push(``, `Strengths (passed with notes — log these as 👍 strength items and build on them first, per GAME_BIBLE.md):`);
+    notes.forEach(n => lines.push('- ' + n));
+  }
   if (!fails.length && !blocks.length && !run.bugs.length && !dbEntries.length && !notes.length)
     lines.push(``, `(No issues recorded yet — everything I checked looked fine.)`);
   return lines.join('\n');
@@ -747,6 +763,7 @@ function wireMainEvents(){
     const tri = b.dataset.tri;
     if (tri === 'bug'){ it.tag = 'bug'; it.status = 'roadmap'; }   // flagged for a fix; Claude confirms + fixes
     else if (tri === 'roadmap'){ it.tag = 'idea'; it.status = 'roadmap'; }
+    else if (tri === 'build'){ it.status = 'roadmap'; }   // strength stays tagged 'strength' — build-on-it lane, not a fix
     else if (tri === 'fixed'){ it.status = 'fixed'; }
     else if (tri === 'dismissed'){ it.status = 'dismissed'; }
     save(); renderMain(); renderRunList();
