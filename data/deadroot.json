@@ -1,191 +1,423 @@
 {
-  "suite": [
-    {
-      "pass": "1. Quick check — do this every build",
-      "items": [
-        {
-          "t": "Nothing is broken when it opens",
-          "h": "Open the game. It should show up normally — no error pop-ups, no blank/black screen."
-        },
-        {
-          "t": "You get to play fast",
-          "h": "From the page loading, it should take one click or tap (or none) to actually be playing. No menus in the way."
-        },
-        {
-          "t": "You can finish one whole round",
-          "h": "Play a complete run/level/match from start to finish without getting stuck."
-        },
-        {
-          "t": "Starting over works",
-          "h": "After you finish or lose, you can cleanly start again."
-        },
-        {
-          "t": "Sound plays and mute works",
-          "h": "You can hear audio, and pressing mute actually silences it."
-        },
-        {
-          "t": "Nothing freezes or traps you",
-          "h": "No hanging, no forever-loading, no screen you can’t get out of."
-        }
-      ]
+ "runs": [
+  {
+   "id": "dr-025-032",
+   "build": "DR-#025→#032 — Grabber + reabsorb + C-backlog",
+   "date": "2026-07-05T21:00:00.000Z",
+   "results": {},
+   "bugs": [],
+   "debrief": {}
+  },
+  {
+   "id": "mr88g5dg72u9b",
+   "bugs": [],
+   "date": "2026-07-05T20:17:32.980Z",
+   "build": "(unspecified build)",
+   "debrief": {
+    "q1": "",
+    "q2": "",
+    "q3": "",
+    "q4": "",
+    "q5": ""
+   },
+   "results": {
+    "0:0": {
+     "note": "",
+     "status": "pass"
     },
-    {
-      "pass": "2. First-timer test — do this when something is new",
-      "items": [
-        {
-          "t": "Playable with zero instructions",
-          "h": "Pretend you’ve never seen it. Can you work out what to do just by looking at the screen?"
-        },
-        {
-          "t": "No “wait… what do I do?” moments",
-          "h": "Write down anywhere you got confused. That’s a spot to fix — it’s not you being slow."
-        },
-        {
-          "t": "It survives weird inputs",
-          "h": "Try things it might not expect — spam buttons, tap random spots. It shouldn’t break."
-        },
-        {
-          "t": "You always know where you are",
-          "h": "At any moment you can tell: what to do now, what you just did, and what’s coming next."
-        }
-      ]
+    "0:1": {
+     "note": "",
+     "status": "pass"
     },
-    {
-      "pass": "3. Check every feature — the thorough pass",
-      "items": [
-        {
-          "t": "Every button does what it says",
-          "h": "Click each button/menu item. It should do exactly what its label promises."
-        },
-        {
-          "t": "All the control types work",
-          "h": "Try keyboard, mouse/touch, and controller (if supported). Each should reach every action."
-        },
-        {
-          "t": "Points/coins/progress add up right",
-          "h": "Earn some, spend some. Check the numbers change correctly and don’t glitch."
-        },
-        {
-          "t": "Your progress saves",
-          "h": "Close the game and reopen it. Whatever you unlocked or earned should still be there."
-        },
-        {
-          "t": "The extremes behave",
-          "h": "Check the edges: having zero of something, the maximum, and the very first time vs. later times."
-        },
-        {
-          "t": "Looks right at any size",
-          "h": "Resize the window and try a phone-shaped screen. Nothing should overflow or get cut off."
-        }
-      ]
+    "0:2": {
+     "note": "",
+     "status": "pass"
     },
-    {
-      "pass": "4. Is it fun and fair? — play a few rounds",
-      "items": [
-        {
-          "t": "Played a few rounds back to back",
-          "h": "Do 3–5 full sessions in a row so you feel the real rhythm, not just one lucky or unlucky run."
-        },
-        {
-          "t": "Difficulty feels fair",
-          "h": "Note any moment that felt cheap or unfairly hard, and roughly where it happened."
-        },
-        {
-          "t": "It never got boring",
-          "h": "Note any stretch that dragged or felt repetitive. Boredom counts as a real problem here."
-        },
-        {
-          "t": "You’d actually play again",
-          "h": "Would you start a 4th or 5th round? Jot down why or why not — that answer matters most."
-        },
-        {
-          "t": "Quick gut rating (1–5)",
-          "h": "Rate fun / fair / clear / would-recommend, each 1–5. Do it each build so you can see the trend."
-        }
-      ]
+    "0:3": {
+     "note": "",
+     "status": "pass"
     },
-    {
-      "pass": "5. Ready for the store — do this before you submit",
-      "items": [
-        {
-          "t": "Meets the platform’s rules",
-          "h": "Run the platform’s own checklist. For CrazyGames that’s GAME_BIBLE.md in the play-area repo."
-        },
-        {
-          "t": "Tested on real devices",
-          "h": "Not just your desktop browser — try it on an actual phone and/or tablet."
-        },
-        {
-          "t": "Handles bad conditions",
-          "h": "Try it with an ad-blocker on, slow internet, a backgrounded tab, and rotating the phone."
-        }
-      ]
+    "0:5": {
+     "note": "",
+     "status": "pass"
     },
-    {
-      "pass": "6. Did a fix break anything? — do this after fixing bugs",
-      "items": [
-        {
-          "t": "Re-tested around the fix",
-          "h": "Re-check everything near what you changed, not only the one bug you were chasing."
-        },
-        {
-          "t": "Re-ran the quick check",
-          "h": "Do pass 1 again fully. A fix that breaks the basics is worse than the bug it fixed."
-        },
-        {
-          "t": "Checked things that share code",
-          "h": "If you changed something lots of features rely on, test all of those features, not just one."
-        }
-      ]
+    "2:4": {
+     "note": "too easy, right now i can create a bunch of spitters quickly and just ride them all the way through to level 12.  no need for other tower types, we need to enocurage startic use of towers in type, quantity and placement",
+     "status": "fail"
+    },
+    "3:0": {
+     "note": "it has a good base rythm",
+     "status": "pass"
+    },
+    "3:2": {
+     "note": "current difficutly is too easy, engaging and novel but easy to figure out how to win, maybe we should start them off with a random maze pattern each level to add to  variety.",
+     "status": "fail"
+    },
+    "3:3": {
+     "note": "yes, unique and has great potential",
+     "status": "pass"
+    },
+    "3:4": {
+     "note": "4",
+     "status": "untested"
     }
-  ],
-  "runs": [
+   }
+  },
+  {
+   "id": "mr6w3lklluc1c",
+   "bugs": [],
+   "date": "2026-07-04T21:44:05.877Z",
+   "build": "(unspecified build)",
+   "debrief": {
+    "q1": "",
+    "q2": "",
+    "q3": "",
+    "q4": "",
+    "q5": ""
+   },
+   "results": {}
+  },
+  {
+   "id": "hist-dr-001",
+   "bugs": [
     {
-      "id": "hist-dr-001",
-      "build": "DR-#001 slice",
-      "date": "2026-07-03T20:00:00.000Z",
-      "results": {
-        "0:2": {
-          "status": "pass",
-          "note": "First playable slice ships; core corpse-mutation tower-defense loop completes"
-        },
-        "2:0": {
-          "status": "pass",
-          "note": "Corpse/tower tap-radius hit tests verified (near-miss hits + far-miss non-hits) via a temporary debug hook"
-        },
-        "5:0": {
-          "status": "pass",
-          "note": "Robustness pass on the new batch"
-        }
-      },
-      "bugs": [
-        {
-          "id": "b-dr-1",
-          "title": "Corpse-tap returned menu unexpectedly null",
-          "severity": "Major",
-          "freq": "sometimes",
-          "repro": "1. Tap a corpse near the edge",
-          "expected": "Hits register within a sane radius",
-          "actual": "Unbounded hitPad() over-reached — FIXED (capped hitPad at 80px)"
-        },
-        {
-          "id": "b-dr-2",
-          "title": "Dead scaling + spawn-count cap missing in endless",
-          "severity": "Major",
-          "freq": "always",
-          "repro": "1. Reach late endless waves",
-          "expected": "Difficulty scales smoothly, spawns capped",
-          "actual": "Scaling bug + uncapped spawns — FIXED (endlessWave())"
-        }
-      ],
-      "debrief": {
-        "q1": "",
-        "q2": "Next = playtest + tuning.",
-        "q3": "",
-        "q4": "",
-        "q5": ""
-      }
+     "id": "b-dr-1",
+     "freq": "sometimes",
+     "repro": "1. Tap a corpse near the edge",
+     "title": "Corpse-tap returned menu unexpectedly null",
+     "actual": "Unbounded hitPad() over-reached — FIXED (capped hitPad at 80px)",
+     "expected": "Hits register within a sane radius",
+     "severity": "Major"
+    },
+    {
+     "id": "b-dr-2",
+     "freq": "always",
+     "repro": "1. Reach late endless waves",
+     "title": "Dead scaling + spawn-count cap missing in endless",
+     "actual": "Scaling bug + uncapped spawns — FIXED (endlessWave())",
+     "expected": "Difficulty scales smoothly, spawns capped",
+     "severity": "Major"
     }
-  ],
-  "inbox": []
+   ],
+   "date": "2026-07-03T20:00:00.000Z",
+   "build": "DR-#001 slice",
+   "debrief": {
+    "q1": "hard to see the game, visuallytoo small and colors too alike",
+    "q2": "Next = playtest + tuning.",
+    "q3": "the tower selection, really just use the one. we shoujld make it one tower that you cadn mutate mutliple ways (upgrades)",
+    "q4": "",
+    "q5": ""
+   },
+   "results": {
+    "0:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:2": {
+     "note": "First playable slice ships; core corpse-mutation tower-defense loop completes",
+     "status": "pass"
+    },
+    "0:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:4": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:5": {
+     "note": "enemies can still attack non defended side the first time they appear. make the sentinals you placed at the cardinal directions kill the normal mob on one shot and it automatically becomes a monster. ",
+     "claude": {
+      "at": "2026-07-04T19:24:15.684Z",
+      "note": "fixing in deadroot — undefended-side hits on first spawn + cardinal sentinels one-shot a normal mob then convert it to a monster.",
+      "state": "working"
+     },
+     "status": "fail"
+    },
+    "1:0": {
+     "note": "redo after graphics upgrade. graphics are so basic right now we can't indentify the gaps in zero instrucitons",
+     "claude": {
+      "at": "2026-07-04T19:24:15.684Z",
+      "note": "parked behind the art pass; re-test after graphics upgrade.",
+      "state": "roadmap"
+     },
+     "status": "fail"
+    },
+    "1:1": {
+     "note": "not easy to know what to do at first or what each tower does or it's range",
+     "claude": {
+      "at": "2026-07-04T19:24:15.684Z",
+      "note": "onboarding + per-tower tooltip and range ring.",
+      "state": "roadmap"
+     },
+     "status": "fail"
+    },
+    "1:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "1:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:0": {
+     "note": "Corpse/tower tap-radius hit tests verified (near-miss hits + far-miss non-hits) via a temporary debug hook",
+     "status": "pass"
+    },
+    "2:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:4": {
+     "note": "still gaps where an enemy can get past a warden and no tower and free hits on hive . maybe the hive needs a damage shield hat can be buffed via currency as fallback \n",
+     "status": "untested"
+    },
+    "2:5": {
+     "note": "needs work here. elements, text, everything is too small and hard to read on my 15 inch laptop, but art update is inc, so check back on this after",
+     "status": "untested"
+    },
+    "3:1": {
+     "note": "the lack of clarit in tower design and placement makes it hard to put towers togehter at the right time",
+     "claude": {
+      "at": "2026-07-04T19:24:15.684Z",
+      "note": "downstream of tower clarity; revisit after tooltips/range land.",
+      "state": "roadmap"
+     },
+     "status": "fail"
+    },
+    "3:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:4": {
+     "note": "3",
+     "status": "untested"
+    },
+    "4:0": {
+     "note": "",
+     "claude": {
+      "at": "2026-07-04T19:24:15.684Z",
+      "note": "what specifically failed? no note was captured.",
+      "state": "need-info"
+     },
+     "status": "fail"
+    },
+    "5:0": {
+     "note": "Robustness pass on the new batch",
+     "status": "pass"
+    }
+   }
+  }
+ ],
+ "inbox": [
+  {
+   "id": "mr6qu0gz2ez3u",
+   "tag": "note",
+   "date": "2026-07-04T19:16:40.547Z",
+   "note": "Dismissed: empty test entry.",
+   "text": "test",
+   "status": "dismissed"
+  }
+ ],
+ "suite": [
+  {
+   "pass": "1. Quick check — do this every build",
+   "items": [
+    {
+     "h": "Open the game. It should show up normally — no error pop-ups, no blank/black screen.",
+     "t": "Nothing is broken when it opens"
+    },
+    {
+     "h": "From the page loading, it should take one click or tap (or none) to actually be playing. No menus in the way.",
+     "t": "You get to play fast"
+    },
+    {
+     "h": "Play a complete run/level/match from start to finish without getting stuck.",
+     "t": "You can finish one whole round"
+    },
+    {
+     "h": "After you finish or lose, you can cleanly start again.",
+     "t": "Starting over works"
+    },
+    {
+     "h": "You can hear audio, and pressing mute actually silences it.",
+     "t": "Sound plays and mute works"
+    },
+    {
+     "h": "No hanging, no forever-loading, no screen you can’t get out of.",
+     "t": "Nothing freezes or traps you"
+    }
+   ]
+  },
+  {
+   "pass": "2. First-timer test — do this when something is new",
+   "items": [
+    {
+     "h": "Pretend you’ve never seen it. Can you work out what to do just by looking at the screen?",
+     "t": "Playable with zero instructions"
+    },
+    {
+     "h": "Write down anywhere you got confused. That’s a spot to fix — it’s not you being slow.",
+     "t": "No “wait… what do I do?” moments"
+    },
+    {
+     "h": "Try things it might not expect — spam buttons, tap random spots. It shouldn’t break.",
+     "t": "It survives weird inputs"
+    },
+    {
+     "h": "At any moment you can tell: what to do now, what you just did, and what’s coming next.",
+     "t": "You always know where you are"
+    }
+   ]
+  },
+  {
+   "pass": "3. Check every feature — the thorough pass",
+   "items": [
+    {
+     "h": "Click each button/menu item. It should do exactly what its label promises.",
+     "t": "Every button does what it says"
+    },
+    {
+     "h": "Try keyboard, mouse/touch, and controller (if supported). Each should reach every action.",
+     "t": "All the control types work"
+    },
+    {
+     "h": "Earn some, spend some. Check the numbers change correctly and don’t glitch.",
+     "t": "Points/coins/progress add up right"
+    },
+    {
+     "h": "Close the game and reopen it. Whatever you unlocked or earned should still be there.",
+     "t": "Your progress saves"
+    },
+    {
+     "h": "Check the edges: having zero of something, the maximum, and the very first time vs. later times.",
+     "t": "The extremes behave"
+    },
+    {
+     "h": "Resize the window and try a phone-shaped screen. Nothing should overflow or get cut off.",
+     "t": "Looks right at any size"
+    }
+   ]
+  },
+  {
+   "pass": "4. Is it fun and fair? — play a few rounds",
+   "items": [
+    {
+     "h": "Do 3–5 full sessions in a row so you feel the real rhythm, not just one lucky or unlucky run.",
+     "t": "Played a few rounds back to back"
+    },
+    {
+     "h": "Note any moment that felt cheap or unfairly hard, and roughly where it happened.",
+     "t": "Difficulty feels fair"
+    },
+    {
+     "h": "Note any stretch that dragged or felt repetitive. Boredom counts as a real problem here.",
+     "t": "It never got boring"
+    },
+    {
+     "h": "Would you start a 4th or 5th round? Jot down why or why not — that answer matters most.",
+     "t": "You’d actually play again"
+    },
+    {
+     "h": "Rate fun / fair / clear / would-recommend, each 1–5. Do it each build so you can see the trend.",
+     "t": "Quick gut rating (1–5)"
+    }
+   ]
+  },
+  {
+   "pass": "5. Ready for the store — do this before you submit",
+   "items": [
+    {
+     "h": "Run the platform’s own checklist. For CrazyGames that’s GAME_BIBLE.md in the play-area repo.",
+     "t": "Meets the platform’s rules"
+    },
+    {
+     "h": "Not just your desktop browser — try it on an actual phone and/or tablet.",
+     "t": "Tested on real devices"
+    },
+    {
+     "h": "Try it with an ad-blocker on, slow internet, a backgrounded tab, and rotating the phone.",
+     "t": "Handles bad conditions"
+    }
+   ]
+  },
+  {
+   "pass": "6. Did a fix break anything? — do this after fixing bugs",
+   "items": [
+    {
+     "h": "Re-check everything near what you changed, not only the one bug you were chasing.",
+     "t": "Re-tested around the fix"
+    },
+    {
+     "h": "Do pass 1 again fully. A fix that breaks the basics is worse than the bug it fixed.",
+     "t": "Re-ran the quick check"
+    },
+    {
+     "h": "If you changed something lots of features rely on, test all of those features, not just one.",
+     "t": "Checked things that share code"
+    }
+   ]
+  },
+  {
+   "pass": "7. New this build — DR-#025→#032 (Grabber, reabsorb, drag-paint, sell, rot, gates)",
+   "items": [
+    {
+     "t": "GRABBER slows enemies",
+     "h": "Pick GRABBER (45◈), place one on a lane. Watch enemies cross its amber aura ring — they should visibly CRAWL while inside it and speed back up once they leave."
+    },
+    {
+     "t": "GRABBER looks distinct from a ZOMBIE",
+     "h": "A grabber should be unmistakable next to a normal zombie: amber (not lime) base disc, a dashed amber ring showing its slow radius, and wiggling grasping claw-arms. You should tell them apart at a glance."
+    },
+    {
+     "t": "GRABBER never shoots",
+     "h": "A grabber only slows — it should never fire an acid shot. Only the ZOMBIE bites/shoots."
+    },
+    {
+     "t": "Reabsorption cooldown fires when a unit dies",
+     "h": "Let enemies kill one of your zombies/grabbers. Right after it dies, try to place a NEW zombie or grabber: it should be REFUSED with a 'REABSORBING Ns' message, and both unit buttons dim + count down ~4s. After the countdown you can build units again."
+    },
+    {
+     "t": "Cooldown does NOT block hedges or salvage",
+     "h": "While the 'reabsorbing' countdown is running: you should STILL be able to place HEDGE walls, and selling your own unit yourself (SALVAGE) should NOT start the cooldown."
+    },
+    {
+     "t": "Drag-to-paint hedge walls",
+     "h": "Pick HEDGE, then press and DRAG across several tiles in one motion — a whole wall should appear in one stroke (not one tap per tile). Zombies/grabbers should still be one tap each (no drag-spam)."
+    },
+    {
+     "t": "Green/red ghost build cursor",
+     "h": "With a brush selected, hover over the field: a filled ghost square shows where it'll drop — green (in the brush's color) where it's allowed, RED with an X where it isn't (on the hive, a gate, when you can't afford it, or where it would pinch the path)."
+    },
+    {
+     "t": "Sell / remove hedges & zombies",
+     "h": "Tap one of YOUR hedges with no brush active → a REMOVE button appears and refunds a few ◈. Tap a starting (seeded) hedge → REMOVE says 'free'. Tap a zombie/grabber → SALVAGE refunds biomass. The lane should re-open after removal."
+    },
+    {
+     "t": "Long maze = more rot damage",
+     "h": "Build a long winding maze. Enemies taking the long way should take steadily INCREASING green 'rot' damage the longer they're inside (green motes rising off them) — a long maze should visibly wear the horde down vs a short one."
+    },
+    {
+     "t": "Gate-opening flare + banner",
+     "h": "At wave 2 the WEST gate should flash/flare with a banner 'THE WEST GATE OPENS'. At wave 5 the NORTH & SOUTH gates flare together. You should clearly SEE on the field which new entrance just opened."
+    },
+    {
+     "t": "Hedges look like leafy topiary",
+     "h": "Hedges should read as leafy bushes — dappled light/dark green clumps with a lit top edge — not flat green slabs. Judge if it 'pops' at real size."
+    },
+    {
+     "t": "Boons & text match the current loop",
+     "h": "When 'THE HIVE ADAPTS' offers boons between waves, they should mention things you can actually build (Zombie / Grabber / Hedge — e.g. GRASPING REACH, CHOKEHOLD, THORNED HEDGES). No leftover 'Spore/Rootmass/mutate a corpse' wording anywhere (onboarding hint should say pick a brush & tap the field, not 'tap a corpse')."
+    },
+    {
+     "t": "Nothing regressed after the cleanup",
+     "h": "Play a full run start to finish: waves spawn from the right gates, biomass in/out is correct, pause/mute/speed toggle, death + endless all still work (a big chunk of dead code was removed this build — make sure the basics are intact)."
+    }
+   ]
+  }
+ ]
 }
