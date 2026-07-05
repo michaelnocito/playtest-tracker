@@ -56,6 +56,24 @@ shift) and folds it into a small "✓ Completed sprint checks" line at the botto
 checklist goes back to just the general passes. You can also hit **retire** on a sprint
 group manually if a feature gets descoped before it's fully tested.
 
+## Logging fixes (Claude → tracker)
+
+When you ask Claude to fix something you've marked fail/blocked in the tracker, Claude will:
+
+1. **Fix the code** and commit it to the repo.
+2. **Update `data/<game>.json`** to mark those items as fixed in the current run, setting:
+   ```json
+   "results": {
+     "0:2": { "status": "fail", "note": "…", "claude": { "state": "fixed", "note": "Changed X from Y to Z", "at": "2026-07-05T…Z" } }
+   }
+   ```
+   The `claude` field tells the app: "Claude has acted on this — retest to confirm."
+3. **Commit + push** both the code fix and the tracker update together.
+
+**In the app:** After Claude fixes something, hit **⭯ Sync now** (or reload) to pull the latest from GitHub. Items Claude fixed show a badge: **↳ Claude fixed it — retest**. You then re-test and mark pass/fail; your verdict supersedes Claude's claim.
+
+**Why this way?** It ties fixes to the exact commit that shipped them, keeps the tracker in sync with the code, and makes the feedback loop visible: you can see which commit addressed which failure.
+
 ## Files
 
 - `index.html` — the whole app (single file, no build step)
