@@ -30,6 +30,32 @@ to "only before you submit". Every check has a plain-English "how to test it" li
 never have to decode QA jargon. Mark each **pass / fail / blocked** (click the button to
 cycle), jot a note, log bugs with a severity, and answer a short debrief.
 
+## Sprint-specific checks (importing custom test steps)
+
+The 6-pass suite above is generic and stays the same for every game. On top of it you can
+say, in chat, something like **"upload testing to playtest for jade-fist — test the new
+dodge-cancel window and the screen shake"** and Claude will:
+
+1. Look at what actually changed (recent commits / `<GAME>_DEV_NOTES.md`) and turn it into
+   concrete, plain-English test steps.
+2. Add them as a new group in that game's suite, tagged so the app renders it as a
+   **🎯 SPRINT** block — a distinct blue-bordered section, shown *above* the general
+   6 passes, clearly separate from them.
+3. Commit + push (and/or push to Supabase) the same way any other tracker update does.
+
+The shape Claude writes into `data/<game>.json` (`games[name].suite`):
+```json
+{ "pass": "🎯 Sprint check — JF-#040 dodge cancel", "custom": true,
+  "sprintLabel": "JF-#040 dodge cancel", "addedDate": "2026-07-05T00:00:00.000Z",
+  "retired": false, "items": [ { "t": "...", "h": "..." } ] }
+```
+These sprint checks **persist across builds until every item in the group passes** — same
+untested/pass/fail/blocked cycle as anything else, re-tested each new run. Once they all
+show pass, the app quietly marks the group `retired` (no more splicing, item ids never
+shift) and folds it into a small "✓ Completed sprint checks" line at the bottom, so the
+checklist goes back to just the general passes. You can also hit **retire** on a sprint
+group manually if a feature gets descoped before it's fully tested.
+
 ## Files
 
 - `index.html` — the whole app (single file, no build step)

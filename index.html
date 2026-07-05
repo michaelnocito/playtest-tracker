@@ -76,6 +76,11 @@
   .passGroup{margin-bottom:24px}
   .passTitle{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--accent);
     border-bottom:2px solid var(--line);padding-bottom:6px;margin-bottom:10px}
+  .sprintGroup{background:var(--info-soft);border:1px solid var(--info);border-radius:12px;padding:12px 14px}
+  .sprintGroup .passTitle{color:var(--info);border-bottom-color:var(--info)}
+  .sprintTag{font-family:var(--font-mono);font-size:11px;font-weight:600;background:var(--info);
+    color:#fff;padding:2px 9px;border-radius:20px;letter-spacing:0.03em}
+  .sprintDone{opacity:0.7}
   .item{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
   .item .txt{flex:1;padding-top:6px;font-weight:500;color:var(--text)}
   .item .how{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.45}
@@ -545,11 +550,28 @@ function renderRunList(){
 function tallyResults(run){
   let pass=0, fail=0, blocked=0, untested=0;
   const g = currentGame();
-  g.suite.forEach((p, pi) => p.items.forEach((it, ii) => {
+  g.suite.forEach((p, pi) => { if (p.retired) return; p.items.forEach((it, ii) => {
     const s = (run.results[itemId(pi,ii)] || {}).status || 'untested';
     if (s==='pass') pass++; else if (s==='fail') fail++; else if (s==='blocked') blocked++; else untested++;
-  }));
+  }); });
   return { pass, fail, blocked, untested };
+}
+
+// Sprint/feature-specific checks: a chat can import a batch of checks scoped to
+// recent changes (e.g. "test the new FEAST mechanic"). They're pushed onto the
+// end of g.suite as { pass, items, custom:true, sprintLabel, addedDate,
+// retired:false } — never spliced out (so pi:ii item ids never shift), just
+// flagged retired:true once every item in the group passes, so they persist in
+// the checklist until fully tested and passed, then quietly clear themselves.
+function autoRetireSprintChecks(g, run){
+  if (!g || !run) return false;
+  let changed = false;
+  g.suite.forEach((p, pi) => {
+    if (!p.custom || p.retired || !p.items.length) return;
+    const allPass = p.items.every((it, ii) => resultStatus(run, itemId(pi, ii)) === 'pass');
+    if (allPass){ p.retired = true; p.completedBuild = run.build; p.completedDate = new Date().toISOString(); changed = true; }
+  });
+  return changed;
 }
 
 function renderMain(){
@@ -573,10 +595,12 @@ function renderMain(){
     return;
   }
 
+  if (autoRetireSprintChecks(g, run)) save();   // quietly clears any sprint check group that just went all-pass
+
   const counts = tallyResults(run);
   // bucket the fail/blocked items by whose turn they're on next
   let retest = 0, needInfo = 0, working = 0, freshFail = 0;
-  g.suite.forEach((p, pi) => p.items.forEach((it, ii) => {
+  g.suite.forEach((p, pi) => { if (p.retired) return; p.items.forEach((it, ii) => {
     const id = itemId(pi, ii), st = resultStatus(run, id);
     if (st !== 'fail' && st !== 'blocked') return;
     const c = resultClaude(run, id);
@@ -585,7 +609,7 @@ function renderMain(){
     else if (c.state === 'need-info') needInfo++;
     else if (c.state === 'working') working++;
     // 'roadmap' = parked, nobody's immediate turn
-  }));
+  }); });
   const F = f => statusFilter === f ? ' active' : '';     // active-filter marker
   html += `<div class="summary">
     <span class="pill mono">${run.build}</span>
@@ -621,10 +645,17 @@ function renderMain(){
       return resultStatus(run, id) === statusFilter;
     };
     let shown = 0;
-    g.suite.forEach((p, pi) => {
+    // sprint-specific groups render first (they're the current focus), then the
+    // general suite below — same row markup, just visually tagged differently.
+    const order = g.suite.map((p, pi) => pi).filter(pi => !g.suite[pi].retired);
+    order.sort((a, b) => (g.suite[b].custom?1:0) - (g.suite[a].custom?1:0));
+    order.forEach(pi => {
+      const p = g.suite[pi];
       const rows = p.items.map((it, ii) => ({ it, ii, id: itemId(pi, ii) })).filter(x => matches(run, x.id));
       if (statusFilter && !rows.length) return;   // hide groups with nothing matching the filter
-      html += `<div class="passGroup"><div class="passTitle">${p.pass}</div>`;
+      const badge = p.custom ? `<span class="sprintTag">🎯 SPRINT${p.sprintLabel ? ' · ' + escapeHtml(p.sprintLabel) : ''}</span> ` : '';
+      const retireBtn = p.custom ? `<button class="rmBtn" data-retire-pi="${pi}" title="retire this sprint check now, even if not all-pass" style="float:right;font-size:11px">retire</button>` : '';
+      html += `<div class="passGroup${p.custom ? ' sprintGroup' : ''}"><div class="passTitle">${badge}${p.pass}${retireBtn}</div>`;
       rows.forEach(({ it, ii, id }) => {
         shown++;
         const r = run.results[id] || { status: 'untested', note: '' };
@@ -647,6 +678,13 @@ function renderMain(){
       html += `</div>`;
     });
     if (statusFilter && !shown) html += `<div class="hint">Nothing is "${statusFilter}" right now.</div>`;
+    // completed sprint checks: kept for the record, collapsed, no longer counted above
+    const done = g.suite.filter(p => p.custom && p.retired);
+    if (done.length && !statusFilter){
+      html += `<div class="passGroup sprintDone"><div class="passTitle" style="color:var(--subtle)">✓ Completed sprint checks</div>`;
+      done.forEach(p => { html += `<div class="hint" style="margin:4px 0">${escapeHtml(p.sprintLabel || p.pass)} — all passed on ${escapeHtml(p.completedBuild || '?')}${p.completedDate ? ' · ' + new Date(p.completedDate).toLocaleDateString() : ''}</div>`; });
+      html += `</div>`;
+    }
   } else if (activeTab === 'bugs'){
     html += `<div class="bugCard" id="bugForm">
       <h3 style="margin-bottom:10px">Report a bug</h3>
@@ -852,6 +890,11 @@ function wireMainEvents(){
   });
   document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
     activeTab = b.dataset.tab; renderMain();
+  });
+  document.querySelectorAll('[data-retire-pi]').forEach(b => b.onclick = () => {
+    const p = currentGame().suite[+b.dataset.retirePi];
+    p.retired = true; p.completedBuild = run.build; p.completedDate = new Date().toISOString();
+    save(); renderMain();
   });
 }
 
