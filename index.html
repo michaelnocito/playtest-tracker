@@ -500,12 +500,30 @@ function inboxViewHTML(g){
   const nStrength = inbox.filter(i => i.tag === 'strength' && i.status !== 'dismissed').length;
 
   let html = `<div class="summary">
-    <span class="pill mono">Feedback inbox</span>
+    <span class="pill mono">Feedback & Roadmap</span>
     <span>${inbox.length} item${inbox.length===1?'':'s'} · ${nNew} untriaged · ${nRoadmap} roadmapped · ${nCompleted} completed</span>
-    <span style="flex:1"></span>
-    <button id="copyInboxBtn" class="btn-primary" title="Copy the untriaged items to paste into a Claude chat">💬 Send untriaged to Claude</button>
   </div>
-  <p class="hint">Capture feedback above while you play. Untriaged items → roadmap/park (actions logged). Completed items show shipped reference (build #, commit, etc.). This is your action log: what was captured → what was planned → what shipped.</p>`;
+  <p class="hint">Capture feedback above while you play. Untriaged items → roadmap/park (actions logged). Completed items show shipped reference (build #, commit, etc.). This is your action log: what was captured → what was planned → what shipped. The actual project roadmap doc (pulled live from GitHub) is below.</p>`;
+
+  // Roadmap doc, pulled straight from the game's own repo — lives here so
+  // triage and the real backlog are visible together, not on a separate tab.
+  const rm = g.roadmap;
+  html += `<div style="margin-bottom:24px">
+    <div style="font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:10px">🗺️ Project roadmap</div>
+    <p class="hint">Pulled straight from GitHub — the ${'`'}## ROADMAP${'`'} section of that game's HANDOFF/DEV_NOTES doc, not stored here.</p>
+    <div class="grid2">
+      <div class="field"><label>Repo (owner/repo)</label><input id="rmRepo" value="${escapeHtml(rm.repo)}"></div>
+      <div class="field"><label>Folder in that repo</label><input id="rmPath" value="${escapeHtml(rm.path)}"></div>
+    </div>
+    <button id="rmSaveBtn">Save source</button>
+    <button id="rmPullBtn" class="btn-primary">🔄 Pull roadmap from GitHub</button>
+    <span class="hint" style="margin-left:8px">${rm.file ? `from ${escapeHtml(rm.file)}` : ''}${rm.fetchedAt ? ' · pulled ' + new Date(rm.fetchedAt).toLocaleString() : ''}</span>
+    ${rm.error ? `<div class="hint" style="color:var(--bad);margin-top:8px">⚠ ${escapeHtml(rm.error)}</div>` : ''}
+    <div style="margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px">
+      ${rm.md ? mdLite(rm.md) : '<div class="hint">Nothing pulled yet — click "Pull roadmap from GitHub" above.</div>'}
+    </div>
+  </div>`;
+
   if (!inbox.length) return html + '<div class="hint">Nothing captured yet. Use the bar up top while you test.</div>';
 
   // Show sections: untriaged, roadmapped, completed
@@ -670,7 +688,7 @@ function renderRunList(){
   const nNew = (g.inbox || []).filter(i => i.status === 'new').length;
   const inboxBtn = document.createElement('div');
   inboxBtn.className = 'inboxNav' + (mainView === 'inbox' ? ' active' : '');
-  inboxBtn.innerHTML = `📥 Feedback inbox${nNew ? ` <span class="badge">${nNew}</span>` : ''}`;
+  inboxBtn.innerHTML = `📥 Feedback & Roadmap${nNew ? ` <span class="badge">${nNew}</span>` : ''}`;
   inboxBtn.onclick = () => { mainView = 'inbox'; persistLocal(); renderAll(); };
   list.appendChild(inboxBtn);
 
@@ -778,7 +796,6 @@ function renderMain(){
     <button data-tab="checklist" class="${activeTab==='checklist'?'active':''}">Checklist</button>
     <button data-tab="bugs" class="${activeTab==='bugs'?'active':''}">Bugs (${run.bugs.length})</button>
     <button data-tab="debrief" class="${activeTab==='debrief'?'active':''}">Debrief</button>
-    <button data-tab="roadmap" class="${activeTab==='roadmap'?'active':''}">🗺️ Roadmap</button>
     ${statusFilter ? `<span style="flex:1"></span><button id="clearFilter" class="pill">showing: ${statusFilter} ✕ clear</button>` : ''}
   </div>`;
 
@@ -871,38 +888,9 @@ function renderMain(){
       html += `<div class="field"><label>${q}</label>
         <textarea data-debrief="${k}" rows="2">${run.debrief[k] || ''}</textarea></div>`;
     });
-  } else if (activeTab === 'roadmap'){
-    const rm = g.roadmap;
-    html += `<p class="hint">Pulled straight from GitHub — the ${'`'}## ROADMAP${'`'} section of that game's HANDOFF/DEV_NOTES doc, not stored here.</p>
-    <div class="grid2">
-      <div class="field"><label>Repo (owner/repo)</label><input id="rmRepo" value="${escapeHtml(rm.repo)}"></div>
-      <div class="field"><label>Folder in that repo</label><input id="rmPath" value="${escapeHtml(rm.path)}"></div>
-    </div>
-    <button id="rmSaveBtn">Save source</button>
-    <button id="rmPullBtn" class="btn-primary">🔄 Pull roadmap from GitHub</button>
-    <span class="hint" style="margin-left:8px">${rm.file ? `from ${escapeHtml(rm.file)}` : ''}${rm.fetchedAt ? ' · pulled ' + new Date(rm.fetchedAt).toLocaleString() : ''}</span>
-    ${rm.error ? `<div class="hint" style="color:var(--bad);margin-top:8px">⚠ ${escapeHtml(rm.error)}</div>` : ''}
-    <div style="margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px">
-      ${rm.md ? mdLite(rm.md) : '<div class="hint">Nothing pulled yet — click "Pull roadmap from GitHub" above.</div>'}
-    </div>`;
   }
   main.innerHTML = html;
   wireMainEvents();
-}
-
-// Paste-able summary of the untriaged inbox (also lives in the cloud, but this
-// lets you hand Claude the exact batch to act on in one message).
-function inboxMessage(){
-  const g = currentGame(); if (!g) return '';
-  const items = (g.inbox || []).filter(i => i.status === 'new');
-  if (!items.length) return `No untriaged feedback for ${STATE.currentGame} right now.`;
-  const strengths = items.filter(i => i.tag === 'strength');
-  const rest = items.filter(i => i.tag !== 'strength');
-  const lines = [`Here's my untriaged feedback for ${STATE.currentGame}. Please triage each one: fix the bugs, add the ideas to the roadmap, and mark them in the tracker (game "${STATE.currentGame}" in Supabase). Then commit any code/doc changes.`,
-    `Build on strengths first (per GAME_BIBLE.md) — figure out how to lean into what's already landing well before spending effort on non-strengths.`, ``];
-  if (strengths.length){ lines.push(`Strengths to build on:`); strengths.forEach(i => lines.push(`- ${i.text}`)); lines.push(``); }
-  if (rest.length){ lines.push(`Everything else:`); rest.forEach(i => lines.push(`- (${i.tag}) ${i.text}`)); }
-  return lines.join('\n');
 }
 
 // Build a plain-English message the user can paste into a Claude chat. Claude
@@ -970,14 +958,6 @@ function wireMainEvents(){
     g.inbox = (g.inbox || []).filter(x => x.id !== b.dataset.inboxRm);
     save(); renderMain(); renderRunList();
   });
-  const copyInbox = document.getElementById('copyInboxBtn');
-  if (copyInbox) copyInbox.onclick = async () => {
-    const msg = inboxMessage();
-    try { await navigator.clipboard.writeText(msg); copyInbox.textContent = '✓ Copied — paste into Claude'; }
-    catch(e){ window.prompt('Copy this and paste it into a Claude chat:', msg); }
-    setTimeout(() => { if (copyInbox) copyInbox.textContent = '💬 Send untriaged to Claude'; }, 2500);
-  };
-
   // --- mark feedback as shipped (for roadmapped items) ---
   document.querySelectorAll('[data-complete]').forEach(b => b.onclick = () => {
     const g = currentGame(); if (!g) return;
