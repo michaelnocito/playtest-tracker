@@ -495,17 +495,29 @@ function captureBarHTML(){
 function inboxViewHTML(g){
   const inbox = g.inbox || [];
   const nNew = inbox.filter(i => i.status === 'new').length;
+  const nRoadmap = inbox.filter(i => i.status === 'roadmap').length;
+  const nCompleted = inbox.filter(i => i.status === 'fixed').length;
   const nStrength = inbox.filter(i => i.tag === 'strength' && i.status !== 'dismissed').length;
+
   let html = `<div class="summary">
     <span class="pill mono">Feedback inbox</span>
-    <span>${inbox.length} item${inbox.length===1?'':'s'} · ${nNew} untriaged${nStrength ? ` · <span style="color:var(--good)">👍 ${nStrength} strength${nStrength===1?'':'s'} to build on</span>` : ''}</span>
+    <span>${inbox.length} item${inbox.length===1?'':'s'} · ${nNew} untriaged · ${nRoadmap} roadmapped · ${nCompleted} completed</span>
     <span style="flex:1"></span>
     <button id="copyInboxBtn" class="btn-primary" title="Copy the untriaged items to paste into a Claude chat">💬 Send untriaged to Claude</button>
   </div>
-  <p class="hint">Capture anything above while you play — including what's working (👍 strength). Later, triage each item: send bugs to be fixed, ideas/strengths to the roadmap, or mark them done. Build on strengths first — they're the priority; non-strengths get whatever effort is left over. Claude reads this list live and acts on it in your next chat.</p>`;
+  <p class="hint">Capture feedback above while you play. Untriaged items → roadmap/park (actions logged). Completed items show shipped reference (build #, commit, etc.). This is your action log: what was captured → what was planned → what shipped.</p>`;
   if (!inbox.length) return html + '<div class="hint">Nothing captured yet. Use the bar up top while you test.</div>';
-  html += '<div class="inboxList">';
-  inbox.forEach(it => {
+
+  // Show sections: untriaged, roadmapped, completed
+  const untriaged = inbox.filter(i => i.status === 'new');
+  const roadmapped = inbox.filter(i => i.status === 'roadmap');
+  const completed = inbox.filter(i => i.status === 'fixed');
+  const dismissed = inbox.filter(i => i.status === 'dismissed');
+
+  // Untriaged section
+  if (untriaged.length) {
+    html += `<div style="margin-bottom:24px"><div style="font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--accent);margin-bottom:10px">🚨 Untriaged (${untriaged.length})</div><div class="inboxList">`;
+    untriaged.forEach(it => {
     html += `<div class="inboxItem status-${it.status}">
       <div class="inboxTop">
         <span class="itag tag-${it.tag}">${TAG_LABEL[it.tag] || it.tag}</span>
@@ -525,8 +537,52 @@ function inboxViewHTML(g){
         <button data-tri="dismissed" data-id="${it.id}">Dismiss</button>
       </div>
     </div>`;
-  });
-  return html + '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Roadmapped section
+  if (roadmapped.length) {
+    html += `<div style="margin-bottom:24px"><div style="font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--good);margin-bottom:10px">✅ Roadmapped (${roadmapped.length})</div><div class="inboxList">`;
+    roadmapped.forEach(it => {
+      html += `<div class="inboxItem status-${it.status}">
+        <div class="inboxTop">
+          <span class="itag tag-${it.tag}">${TAG_LABEL[it.tag] || it.tag}</span>
+          <span class="istatus">${INBOX_STATUS[it.status] || it.status}</span>
+          <span class="idate">${new Date(it.date).toLocaleDateString()}</span>
+          <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
+        </div>
+        <div class="itext">${escapeHtml(it.text)}</div>
+        ${it.note ? `<div class="how">Claude: ${escapeHtml(it.note)}</div>` : ''}
+        ${(it.actions && it.actions.length) ? `<div class="actionTimeline">${it.actions.map(a => `<div class="action action-${a.type}"><span class="actionType">${a.type}${a.ref ? ` · ${escapeHtml(a.ref)}` : ''}</span><span class="actionNote">${escapeHtml(a.note)}</span><span class="actionTime">${a.at ? new Date(a.at).toLocaleDateString() : '?'}</span></div>`).join('')}</div>` : ''}
+        <div class="triage">
+          <button data-complete="${it.id}" class="btn-primary" style="font-size:12px;padding:5px 10px">📦 Shipped in...</button>
+          <button data-tri="dismissed" data-id="${it.id}" style="font-size:12px;padding:5px 10px">Remove</button>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  // Completed section
+  if (completed.length) {
+    html += `<div style="opacity:0.7"><div style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px">✓ Completed/Shipped (${completed.length})</div><div class="inboxList">`;
+    completed.forEach(it => {
+      html += `<div class="inboxItem" style="opacity:0.8">
+        <div class="inboxTop">
+          <span class="itag tag-${it.tag}">${TAG_LABEL[it.tag] || it.tag}</span>
+          <span class="istatus">completed</span>
+          <span class="idate">${new Date(it.date).toLocaleDateString()}</span>
+          <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
+        </div>
+        <div class="itext">${escapeHtml(it.text)}</div>
+        ${(it.actions && it.actions.length) ? `<div class="actionTimeline">${it.actions.map(a => `<div class="action action-${a.type}"><span class="actionType">${a.type}${a.ref ? ` · ${escapeHtml(a.ref)}` : ''}</span><span class="actionNote">${escapeHtml(a.note)}</span><span class="actionTime">${a.at ? new Date(a.at).toLocaleDateString() : '?'}</span></div>`).join('')}</div>` : ''}
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  return html;
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
@@ -921,6 +977,23 @@ function wireMainEvents(){
     catch(e){ window.prompt('Copy this and paste it into a Claude chat:', msg); }
     setTimeout(() => { if (copyInbox) copyInbox.textContent = '💬 Send untriaged to Claude'; }, 2500);
   };
+
+  // --- mark feedback as shipped (for roadmapped items) ---
+  document.querySelectorAll('[data-complete]').forEach(b => b.onclick = () => {
+    const g = currentGame(); if (!g) return;
+    const it = (g.inbox || []).find(x => x.id === b.dataset.complete); if (!it) return;
+    const ref = prompt('What shipped this? (build #, commit hash, etc.)', 'v1.0.0');
+    if (!ref) return;
+    it.status = 'fixed';
+    it.actions = it.actions || [];
+    it.actions.push({
+      type: 'fixed',
+      ref: ref,
+      note: `Shipped in ${ref}`,
+      at: new Date().toISOString()
+    });
+    save(); renderMain(); renderRunList();
+  });
 
   const run = currentRun(); if (!run) return;
   // --- filter pills + next-step jump + clear ---
