@@ -1,0 +1,73 @@
+{
+  "suite": [
+    {
+      "pass": "1. 🔥 Smoke — every build",
+      "items": [
+        { "t": "Loads clean", "h": "Open https://michaelnocito.github.io/playtest-tracker/ with the console open (F12). No red console errors, no blank screen." }
+      ]
+    },
+    {
+      "pass": "2. 🎯 Happy path — every build",
+      "items": [
+        { "t": "Game/app list + suite render", "h": "Pick any game or kit from the sidebar. Its 6-pass suite (or 🎯 Sprint block) should render with no blank panel." },
+        { "t": "Mark a result + it syncs", "h": "Cycle one checklist item through pass/fail/blocked, add a note, then check the app again after a moment — it should still be there (Supabase Realtime)." },
+        { "t": "Feedback inbox capture", "h": "Type something in the always-on quick-capture bar, tag it, hit Add. It should appear in the Feedback & Roadmap inbox as Untriaged." }
+      ]
+    },
+    {
+      "pass": "3. ♻️ Regression — every build",
+      "items": [
+        { "t": "Whose-turn banner is correct", "h": "After marking a fail, the 'Next:' banner should reflect it's Claude's turn. After Claude marks a result 'fixed', it should say it's your turn to retest." },
+        { "t": "Filter pills work", "h": "Click each summary pill (pass/fail/blocked/untested/retest) — the list should filter to just that status." }
+      ]
+    },
+    {
+      "pass": "4. 💾 State — every build",
+      "items": [
+        { "t": "Reload keeps your data", "h": "Reload the page. Runs, results, and inbox items should all still be there (pulled fresh from Supabase)." }
+      ]
+    },
+    {
+      "pass": "5. 📐 Non-functional — every build",
+      "items": [
+        { "t": "Responsive + light mode", "h": "Shrink the window narrow and flip to light mode. Layout should hold, text readable, nothing cut off." }
+      ]
+    },
+    {
+      "pass": "6. Did a fix break anything? — after fixing bugs",
+      "items": [
+        { "t": "Re-tested around the fix", "h": "Re-check everything near what you changed, not only the one bug you were chasing." },
+        { "t": "Re-ran the smoke + happy path passes", "h": "Do passes 1–2 again fully. A fix that breaks the tracker itself is worse than the bug it fixed." }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": "hist-pt-001",
+      "build": "Initial build → 11-kit rollout (2026-07-04 → 2026-07-06)",
+      "date": "2026-07-06T00:00:00.000Z",
+      "results": {},
+      "bugs": [],
+      "debrief": {
+        "q1": "",
+        "q2": "History reconstructed from git log, not a live playtest run — see inbox for what's still open.",
+        "q3": "",
+        "q4": "",
+        "q5": ""
+      }
+    }
+  ],
+  "inbox": [
+    {
+      "id": "pt-roadmap-001",
+      "tag": "note",
+      "date": "2026-07-06T00:00:00.000Z",
+      "note": "",
+      "text": "The tracker itself is now a tracked app (like every game/kit) — future feature requests, bugs, and ideas for the tracker go through this inbox instead of ad-hoc chat notes.",
+      "status": "roadmap",
+      "actions": [
+        { "type": "noted", "note": "Self-referential onboarding: adding playtest-tracker as an entry in its own tool.", "at": "2026-07-06T00:00:00.000Z" }
+      ]
+    }
+  ]
+}
