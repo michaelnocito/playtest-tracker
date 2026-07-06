@@ -1,0 +1,72 @@
+{
+  "suite": [
+    {
+      "pass": "1. 🔥 Smoke — every build",
+      "items": [
+        {
+          "t": "Loads clean",
+          "h": "Open the kit URL with the browser console open (F12). Page should render with no red console errors."
+        }
+      ]
+    },
+    {
+      "pass": "2. 🎯 Happy path — every build",
+      "items": [
+        {
+          "t": "Every top-nav view loads",
+          "h": "Click every top-nav button once. Every view should load — no blank panel."
+        },
+        {
+          "t": "Lesson 1 → Quick Check → Practice this",
+          "h": "Open Lesson 1, answer the Quick Check, click \"Practice this\". Visual should show, quiz marks green on correct, and it flows into a drill."
+        },
+        {
+          "t": "Chart literacy drills render",
+          "h": "Open a couple of the CL lessons — the chart visuals should render, drills should mark correctly."
+        }
+      ]
+    },
+    {
+      "pass": "3. ♻️ Regression — every build",
+      "items": [
+        {
+          "t": "Wrong/right drill feedback",
+          "h": "In any drill, tap a wrong choice then a right choice. Wrong = red, right = green + advances. No typing box anywhere."
+        }
+      ]
+    },
+    {
+      "pass": "4. 💾 State — every build",
+      "items": [
+        {
+          "t": "Progress + theme persist",
+          "h": "Complete a lesson, then reload — it should still show done. Toggle theme, reload — theme should persist."
+        }
+      ]
+    },
+    {
+      "pass": "5. 📐 Non-functional — every build",
+      "items": [
+        {
+          "t": "Responsive + light mode",
+          "h": "Shrink the window narrow and flip to light mode. Layout should hold, text readable, nothing cut off."
+        }
+      ]
+    },
+    {
+      "pass": "6. Did a fix break anything? — after fixing bugs",
+      "items": [
+        {
+          "t": "Re-tested around the fix",
+          "h": "Re-check everything near what you changed, not only the one bug you were chasing."
+        },
+        {
+          "t": "Re-ran the smoke + happy path passes",
+          "h": "Do passes 1–2 again fully. A fix that breaks the basics is worse than the bug it fixed."
+        }
+      ]
+    }
+  ],
+  "runs": [],
+  "inbox": []
+}
