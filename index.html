@@ -197,7 +197,8 @@
   <div id="topbar">
     <h1>Playtest Tracker</h1>
     <select id="gameSel"></select>
-    <button id="newGameBtn">+ new game</button>
+    <button id="newGameBtn">+ New App</button>
+    <button id="manageBtn" title="rename, merge or delete this app">⚙</button>
     <button id="pullBtn" title="Live sync is automatic; this forces an immediate re-sync">⭯ Sync now</button>
     <span id="pullStatus" class="hint" style="margin:0"></span>
     <span style="width:1px;height:20px;background:var(--line)"></span>
@@ -215,6 +216,26 @@
         </label>
       </div>
     </details>
+  </div>
+  <div id="manageDlg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:50;align-items:center;justify-content:center">
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;width:380px;max-width:92vw;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;margin-bottom:14px">
+        <div style="font-family:var(--font-display);font-weight:600;font-size:15px">Manage app: <span id="mgName" class="mono"></span></div>
+        <span style="flex:1"></span>
+        <button id="mgClose" class="rmBtn" title="close">✕</button>
+      </div>
+      <div class="field"><label>Rename</label>
+        <div style="display:flex;gap:8px"><input id="mgRenameInput" placeholder="new name" style="flex:1"><button id="mgRenameBtn">Rename</button></div>
+      </div>
+      <div class="field" style="margin-top:12px"><label>Merge this app's runs + feedback into…</label>
+        <div style="display:flex;gap:8px"><select id="mgMergeSel" style="flex:1"></select><button id="mgMergeBtn">Merge</button></div>
+        <div class="hint" style="margin-top:4px">The target keeps its own checklist; runs and feedback are combined. This app is then deleted.</div>
+      </div>
+      <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px">
+        <button id="mgDeleteBtn" style="color:var(--bad);border-color:var(--bad)">🗑 Delete this app…</button>
+        <div class="hint" style="margin-top:4px">Removes it locally and from the cloud. Export a JSON backup first if unsure.</div>
+      </div>
+    </div>
   </div>
   <div id="howstrip">
     <b>Live sync is on.</b>
@@ -369,6 +390,47 @@ function sbPushGame(name){
       setPullStatus('saved to cloud ' + new Date().toLocaleTimeString());
     } catch(e){ /* offline / table missing: git+localStorage still hold it */ }
   }, 600);
+}
+async function sbDeleteGame(name){
+  if (!sb) return;
+  try { await sb.from(SB_TABLE).delete().eq('name', name); } catch(e){}
+}
+// ------------------------------------------------------- app management -----
+// rename / merge / delete for whole apps ("games"), driven by the ⚙ dialog.
+function renameApp(oldName, newName){
+  newName = (newName || '').trim();
+  if (!newName || newName === oldName || !STATE.games[oldName]) return false;
+  if (STATE.games[newName]){ alert(`"${newName}" already exists — use Merge instead.`); return false; }
+  STATE.games[newName] = STATE.games[oldName];
+  delete STATE.games[oldName];
+  if (STATE.currentRun[oldName] !== undefined){ STATE.currentRun[newName] = STATE.currentRun[oldName]; delete STATE.currentRun[oldName]; }
+  if (STATE.currentGame === oldName) STATE.currentGame = newName;
+  sbDeleteGame(oldName);
+  save(); return true;
+}
+function mergeApp(srcName, targetName){
+  const src = STATE.games[srcName], tgt = STATE.games[targetName];
+  if (!src || !tgt || srcName === targetName) return false;
+  // union runs + inbox by id; the target keeps its own suite and roadmap source
+  const runsById = new Map(); [...(tgt.runs||[]), ...(src.runs||[])].forEach(r => runsById.set(r.id, r));
+  tgt.runs = [...runsById.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
+  const inboxById = new Map(); [...(tgt.inbox||[]), ...(src.inbox||[])].forEach(i => inboxById.set(i.id, i));
+  tgt.inbox = [...inboxById.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
+  delete STATE.games[srcName];
+  delete STATE.currentRun[srcName];
+  STATE.currentGame = targetName;
+  sbDeleteGame(srcName);
+  save(); return true;
+}
+function deleteApp(name){
+  if (!STATE.games[name]) return false;
+  delete STATE.games[name];
+  delete STATE.currentRun[name];
+  if (STATE.currentGame === name) STATE.currentGame = Object.keys(STATE.games)[0] || null;
+  sbDeleteGame(name);
+  persistLocal();
+  if (STATE.currentGame) sbPushGame(STATE.currentGame);
+  return true;
 }
 function sbSubscribe(){
   if (!sb) return;
@@ -544,6 +606,7 @@ function inboxViewHTML(g){
         <span class="itag tag-${it.tag}">${TAG_LABEL[it.tag] || it.tag}</span>
         <span class="istatus">${INBOX_STATUS[it.status] || it.status}</span>
         <span class="idate">${new Date(it.date).toLocaleDateString()}</span>
+        <button class="rmBtn" data-inbox-edit="${it.id}" title="edit text">✎</button>
         <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
       </div>
       <div class="itext">${escapeHtml(it.text)}</div>
@@ -571,7 +634,8 @@ function inboxViewHTML(g){
           <span class="itag tag-${it.tag}">${TAG_LABEL[it.tag] || it.tag}</span>
           <span class="istatus">${INBOX_STATUS[it.status] || it.status}</span>
           <span class="idate">${new Date(it.date).toLocaleDateString()}</span>
-          <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
+          <button class="rmBtn" data-inbox-edit="${it.id}" title="edit text">✎</button>
+        <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
         </div>
         <div class="itext">${escapeHtml(it.text)}</div>
         ${it.note ? `<div class="how">Claude: ${escapeHtml(it.note)}</div>` : ''}
@@ -594,7 +658,8 @@ function inboxViewHTML(g){
           <span class="itag tag-${it.tag}">${TAG_LABEL[it.tag] || it.tag}</span>
           <span class="istatus">completed</span>
           <span class="idate">${new Date(it.date).toLocaleDateString()}</span>
-          <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
+          <button class="rmBtn" data-inbox-edit="${it.id}" title="edit text">✎</button>
+        <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
         </div>
         <div class="itext">${escapeHtml(it.text)}</div>
         ${(it.actions && it.actions.length) ? `<div class="actionTimeline">${it.actions.map(a => `<div class="action action-${a.type}"><span class="actionType">${a.type}${a.ref ? ` · ${escapeHtml(a.ref)}` : ''}</span><span class="actionNote">${escapeHtml(a.note)}</span><span class="actionTime">${a.at ? new Date(a.at).toLocaleDateString() : '?'}</span></div>`).join('')}</div>` : ''}
@@ -777,7 +842,9 @@ function renderMain(){
   }); });
   const F = f => statusFilter === f ? ' active' : '';     // active-filter marker
   html += `<div class="summary">
-    <span class="pill mono">${run.build}</span>
+    <span class="pill mono">${escapeHtml(run.build)}</span>
+    <button class="rmBtn" id="runRenameBtn" title="rename this test's build/version">✎</button>
+    <button class="rmBtn" id="runDeleteBtn" title="delete this whole test run">🗑</button>
     <span style="flex:1"></span>
     <button class="pill g fbtn${F('pass')}" data-filter="pass">✓ ${counts.pass} pass</button>
     <button class="pill b fbtn${F('fail')}" data-filter="fail">✗ ${counts.fail} fail</button>
@@ -979,7 +1046,16 @@ function wireMainEvents(){
   });
   document.querySelectorAll('[data-inbox-rm]').forEach(b => b.onclick = () => {
     const g = currentGame(); if (!g) return;
+    if (!confirm('Delete this feedback item?')) return;
     g.inbox = (g.inbox || []).filter(x => x.id !== b.dataset.inboxRm);
+    save(); renderMain(); renderRunList();
+  });
+  document.querySelectorAll('[data-inbox-edit]').forEach(b => b.onclick = () => {
+    const g = currentGame(); if (!g) return;
+    const it = (g.inbox || []).find(x => x.id === b.dataset.inboxEdit); if (!it) return;
+    const nu = prompt('Edit feedback text:', it.text);
+    if (nu === null || !nu.trim()) return;
+    it.text = nu.trim();
     save(); renderMain(); renderRunList();
   });
   // --- mark feedback as shipped (for roadmapped items) ---
@@ -1000,6 +1076,22 @@ function wireMainEvents(){
   });
 
   const run = currentRun(); if (!run) return;
+  // --- run rename / delete (in the summary row) ---
+  const runRen = document.getElementById('runRenameBtn');
+  if (runRen) runRen.onclick = () => {
+    const nu = prompt('Build / version for this test:', run.build);
+    if (nu === null || !nu.trim()) return;
+    run.build = nu.trim();
+    save(); renderMain(); renderRunList();
+  };
+  const runDel = document.getElementById('runDeleteBtn');
+  if (runDel) runDel.onclick = () => {
+    if (!confirm(`Delete the whole test run "${run.build}"?\nAll its checklist results, bugs and debrief go with it.`)) return;
+    const g = currentGame();
+    g.runs = g.runs.filter(r => r.id !== run.id);
+    delete STATE.currentRun[STATE.currentGame];
+    save(); renderMain(); renderRunList();
+  };
   // --- filter pills + next-step jump + clear ---
   document.querySelectorAll('.fbtn[data-filter]').forEach(b => b.onclick = () => {
     const f = b.dataset.filter;
@@ -1111,6 +1203,38 @@ document.getElementById('gameSel').onchange = e => {
 document.getElementById('newGameBtn').onclick = () => {
   const name = prompt('Game name (e.g. jade-fist):'); if (!name) return;
   ensureGame(name); STATE.currentGame = name; save(); renderAll();
+};
+// ⚙ manage dialog — rename / merge / delete the selected app
+const manageDlg = document.getElementById('manageDlg');
+function openManage(){
+  if (!STATE.currentGame){ alert('Select an app first.'); return; }
+  document.getElementById('mgName').textContent = STATE.currentGame;
+  document.getElementById('mgRenameInput').value = STATE.currentGame;
+  const sel = document.getElementById('mgMergeSel');
+  sel.innerHTML = '';
+  Object.keys(STATE.games).filter(n => n !== STATE.currentGame).forEach(n => {
+    const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o);
+  });
+  manageDlg.style.display = 'flex';
+}
+document.getElementById('manageBtn').onclick = openManage;
+document.getElementById('mgClose').onclick = () => manageDlg.style.display = 'none';
+manageDlg.onclick = e => { if (e.target === manageDlg) manageDlg.style.display = 'none'; };
+document.getElementById('mgRenameBtn').onclick = () => {
+  if (renameApp(STATE.currentGame, document.getElementById('mgRenameInput').value)){
+    manageDlg.style.display = 'none'; renderAll();
+  }
+};
+document.getElementById('mgMergeBtn').onclick = () => {
+  const target = document.getElementById('mgMergeSel').value;
+  if (!target){ alert('No other app to merge into.'); return; }
+  if (!confirm(`Merge "${STATE.currentGame}" into "${target}"?\n\nRuns and feedback move over; "${STATE.currentGame}" is deleted.`)) return;
+  if (mergeApp(STATE.currentGame, target)){ manageDlg.style.display = 'none'; renderAll(); }
+};
+document.getElementById('mgDeleteBtn').onclick = () => {
+  const name = STATE.currentGame;
+  if (prompt(`Type the app name to confirm deleting it everywhere (local + cloud):\n\n${name}`) !== name) return;
+  if (deleteApp(name)){ manageDlg.style.display = 'none'; renderAll(); }
 };
 document.getElementById('newRunBtn').onclick = () => {
   if (!STATE.currentGame){ alert('Create or select a game first.'); return; }
