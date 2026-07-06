@@ -176,6 +176,15 @@
   .istatus{color:var(--subtle)}
   .idate{color:var(--subtle);margin-left:auto;margin-right:4px}
   .itext{font-weight:500;line-height:1.5}
+  .actionTimeline{border-left:2px solid var(--line);padding-left:12px;margin:8px 0;font-size:12px}
+  .action{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:flex-start}
+  .actionType{font-family:var(--font-mono);font-weight:600;color:var(--info);flex-shrink:0}
+  .actionNote{color:var(--muted);flex:1;min-width:200px}
+  .actionTime{color:var(--subtle);font-size:11px;flex-shrink:0}
+  .action-filed{border-left:3px solid var(--info);padding-left:8px;margin-left:-12px;margin-bottom:8px}
+  .action-incorporated{border-left:3px solid var(--good);padding-left:8px;margin-left:-12px;margin-bottom:8px}
+  .action-noted{border-left:3px solid var(--warm);padding-left:8px;margin-left:-12px;margin-bottom:8px}
+  .action-deferred{border-left:3px solid var(--muted);padding-left:8px;margin-left:-12px;margin-bottom:8px}
   .triage{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   .triage button{font-size:12px;padding:5px 10px;border-radius:8px;color:var(--muted)}
   .triage button:hover{border-color:var(--accent);color:var(--accent)}
@@ -306,12 +315,22 @@ function ensureGame(name){
   if (!STATE.games[name].roadmap) STATE.games[name].roadmap = { repo: 'michaelnocito/play-area', path: name, file: null, md: '', fetchedAt: null, error: '' };
 }
 // Feedback inbox item: { id, text, tag:'bug'|'idea'|'note'|'strength', status:'new'|
-// 'roadmap'|'fixed'|'dismissed', date, note }. Capture is one line; triage
-// (setting tag/status) happens later, matching how studios split the two.
+// 'roadmap'|'fixed'|'dismissed', date, note, actions:[] }. Capture is one line;
+// triage (setting tag/status) happens later, matching how studios split the two.
 // 'strength' = something that landed well (a pass-with-a-good-note, or anything
 // you noticed working). It gets triaged to 'roadmap' the same as an idea, but
 // keeps its tag so it shows up as "build on this" rather than "fix this" — see
 // GAME_BIBLE.md Part 3: build on strengths first, spend leftover effort elsewhere.
+//
+// 'actions' = Claude's response log. Each action: { type, note, ref?, at }.
+// Types: 'filed' (logged as task/issue), 'incorporated' (built into a release),
+// 'noted' (acknowledged), 'deferred' (parked for later), 'duplicate' (merged
+// with another), etc. The ref points to e.g. a build # (JF-#042), GitHub issue,
+// or commit SHA. See CLAUDE_FEEDBACK_LOG.md for the format.
+//
+// When Claude logs an action, it updates the item in data/<game>.json. The app
+// displays actions as a timeline in the feedback item view, so Mike sees what
+// Claude did and when.
 function addInbox(gameName, text, tag){
   const g = STATE.games[gameName]; if (!g) return;
   if (!g.inbox) g.inbox = [];
@@ -496,6 +515,7 @@ function inboxViewHTML(g){
       </div>
       <div class="itext">${escapeHtml(it.text)}</div>
       ${it.note ? `<div class="how">Claude: ${escapeHtml(it.note)}</div>` : ''}
+      ${(it.actions && it.actions.length) ? `<div class="actionTimeline">${it.actions.map(a => `<div class="action action-${a.type}"><span class="actionType">${a.type}${a.ref ? ` · ${escapeHtml(a.ref)}` : ''}</span><span class="actionNote">${escapeHtml(a.note)}</span><span class="actionTime">${a.at ? new Date(a.at).toLocaleDateString() : '?'}</span></div>`).join('')}</div>` : ''}
       <div class="triage">
         ${it.tag === 'strength'
           ? `<button data-tri="build" data-id="${it.id}">→ 🌱 Build on it</button>`

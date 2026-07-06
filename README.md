@@ -56,23 +56,29 @@ shift) and folds it into a small "✓ Completed sprint checks" line at the botto
 checklist goes back to just the general passes. You can also hit **retire** on a sprint
 group manually if a feature gets descoped before it's fully tested.
 
-## Logging fixes (Claude → tracker)
+## Logging actions on all feedback (Claude → tracker)
 
-When you ask Claude to fix something you've marked fail/blocked in the tracker, Claude will:
+Everything you capture — bugs, ideas, strengths, notes — gets tracked with a full action history. When Claude acts on feedback, it logs exactly what was done and when.
 
-1. **Fix the code** and commit it to the repo.
-2. **Update `data/<game>.json`** to mark those items as fixed in the current run, setting:
-   ```json
-   "results": {
-     "0:2": { "status": "fail", "note": "…", "claude": { "state": "fixed", "note": "Changed X from Y to Z", "at": "2026-07-05T…Z" } }
-   }
-   ```
-   The `claude` field tells the app: "Claude has acted on this — retest to confirm."
-3. **Commit + push** both the code fix and the tracker update together.
+**Test-result fixes** (fail/blocked items in a test run):
+- Claude fixes the code and marks the result as `"claude": { "state": "fixed", "note": "…" }`
+- You retest and verdict is final
 
-**In the app:** After Claude fixes something, hit **⭯ Sync now** (or reload) to pull the latest from GitHub. Items Claude fixed show a badge: **↳ Claude fixed it — retest**. You then re-test and mark pass/fail; your verdict supersedes Claude's claim.
+**Feedback inbox items** (bugs, ideas, strengths, notes):
+- Claude can log actions like `filed` (opened a task), `incorporated` (added to sprint), `noted` (acknowledged), `deferred` (parked), `fixed` (deployed), `duplicate` (merged)
+- Each action includes a note + optional reference (build #, issue link, commit)
+- You see a timeline of what Claude did
 
-**Why this way?** It ties fixes to the exact commit that shipped them, keeps the tracker in sync with the code, and makes the feedback loop visible: you can see which commit addressed which failure.
+**Example feedback flow:**
+1. You capture: "the dodge combos feel really good" (tagged as strength)
+2. Claude: logs action `incorporated · JF-#043 · Planning sprint around extending combos`
+3. You sync → item shows a timeline and status updates to "roadmapped"
+4. Later, Claude: logs action `fixed · JF-#043 · Shipped 3 new combos + juice`
+5. You see the full journey: idea → plan → shipped
+
+Hit **⭯ Sync now** after any chat to pull Claude's actions and see the full history of every item.
+
+See **CLAUDE_FEEDBACK_LOG.md** for the action types and format, and **CLAUDE_WORKFLOW.md** for test-result fixes specifically.
 
 ## Files
 
