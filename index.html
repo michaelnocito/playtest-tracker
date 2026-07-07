@@ -477,7 +477,12 @@ function mergeGame(local, incoming){
   const inboxById = new Map();
   [...(local.inbox||[]), ...(incoming.inbox||[])].forEach(i => inboxById.set(i.id, i));
   const inbox = [...inboxById.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
-  return { suite: incoming.suite || local.suite, runs, inbox, roadmap: local.roadmap || incoming.roadmap };
+  // roadmap source: an explicitly saved one (editedAt) beats a back-filled default; newer edit wins.
+  // Plain local||incoming let every client's default shadow the value saved in the cloud.
+  const rmTime = r => (r && r.editedAt && Date.parse(r.editedAt)) || 0;
+  const rmL = local.roadmap, rmI = incoming.roadmap;
+  const roadmap = (rmL && rmI) ? (rmTime(rmI) > rmTime(rmL) ? rmI : rmL) : (rmL || rmI);
+  return { suite: incoming.suite || local.suite, runs, inbox, roadmap };
 }
 function persistLocal(){ localStorage.setItem(KEY, JSON.stringify(STATE)); }   // save without re-pushing to cloud
 async function pullGame(name, silent){
@@ -577,9 +582,13 @@ function inboxViewHTML(g){
     <div style="font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:10px">🗺️ Project roadmap</div>
     <p class="hint">Pulled straight from GitHub — the ${'`'}## ROADMAP${'`'} section of that game's HANDOFF/DEV_NOTES doc, not stored here.</p>
     <div class="grid2">
-      <div class="field"><label>Repo (owner/repo)</label><input id="rmRepo" value="${escapeHtml(rm.repo)}"></div>
-      <div class="field"><label>Folder in that repo</label><input id="rmPath" value="${escapeHtml(rm.path)}"></div>
+      <div class="field"><label>Repo (owner/repo)</label><input id="rmRepo" list="rmRepoList" value="${escapeHtml(rm.repo)}"><datalist id="rmRepoList"></datalist></div>
+      <div class="field"><label>Folder in that repo (empty = repo root)</label><input id="rmPath" list="rmPathList" value="${escapeHtml(rm.path)}"><datalist id="rmPathList"></datalist></div>
     </div>
+    <button id="rmRepoLoad" title="List your public GitHub repos so you can pick instead of typing">📂 Load my repos</button>
+    <button id="rmPathLoad" title="List that repo's top-level folders">📁 Load folders</button>
+    <span class="hint" id="rmPickHint" style="margin-left:4px"></span>
+    <div style="margin-top:8px"></div>
     <button id="rmSaveBtn">Save source</button>
     <button id="rmPullBtn" class="btn-primary">🔄 Pull roadmap from GitHub</button>
     <span class="hint" style="margin-left:8px">${rm.file ? `from ${escapeHtml(rm.file)}` : ''}${rm.fetchedAt ? ' · pulled ' + new Date(rm.fetchedAt).toLocaleString() : ''}</span>
@@ -1175,13 +1184,48 @@ function wireMainEvents(){
     const g = currentGame();
     g.roadmap.repo = document.getElementById('rmRepo').value.trim();
     g.roadmap.path = document.getElementById('rmPath').value.trim();
+    g.roadmap.editedAt = new Date().toISOString();   // saved source outranks defaults in mergeGame
     save(); renderMain();
+  };
+  // GitHub pickers — unauthenticated REST (public repos; OAuth device flow is
+  // CORS-blocked from static pages, so no-auth + free typing is the design).
+  const rmPickHint = document.getElementById('rmPickHint');
+  const rmRepoLoad = document.getElementById('rmRepoLoad');
+  if (rmRepoLoad) rmRepoLoad.onclick = async () => {
+    const owner = (document.getElementById('rmRepo').value.trim().split('/')[0]) || 'michaelnocito';
+    rmRepoLoad.disabled = true; if (rmPickHint) rmPickHint.textContent = 'loading repos…';
+    try {
+      const res = await fetch(`https://api.github.com/users/${owner}/repos?per_page=100&sort=updated`);
+      if (!res.ok) throw new Error('HTTP ' + res.status + (res.status === 403 ? ' (rate limit — try again in an hour)' : ''));
+      const repos = await res.json();
+      document.getElementById('rmRepoList').innerHTML =
+        repos.map(r => `<option value="${escapeHtml(r.full_name)}">`).join('');
+      if (rmPickHint) rmPickHint.textContent = `${repos.length} repos loaded — click the Repo box to pick`;
+    } catch(e){ if (rmPickHint) rmPickHint.textContent = '⚠ ' + e.message; }
+    rmRepoLoad.disabled = false;
+  };
+  const rmPathLoad = document.getElementById('rmPathLoad');
+  if (rmPathLoad) rmPathLoad.onclick = async () => {
+    const repo = document.getElementById('rmRepo').value.trim();
+    if (!repo || !repo.includes('/')){ if (rmPickHint) rmPickHint.textContent = '⚠ set Repo (owner/repo) first'; return; }
+    rmPathLoad.disabled = true; if (rmPickHint) rmPickHint.textContent = 'loading folders…';
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}/contents/`);
+      if (!res.ok) throw new Error('HTTP ' + res.status + (res.status === 403 ? ' (rate limit — try again in an hour)' : ''));
+      const files = await res.json();
+      const dirs = (Array.isArray(files) ? files : []).filter(f => f.type === 'dir');
+      document.getElementById('rmPathList').innerHTML =
+        dirs.map(d => `<option value="${escapeHtml(d.name)}">`).join('');
+      if (rmPickHint) rmPickHint.textContent = `${dirs.length} folders loaded — click the Folder box to pick (leave empty for repo root)`;
+    } catch(e){ if (rmPickHint) rmPickHint.textContent = '⚠ ' + e.message; }
+    rmPathLoad.disabled = false;
   };
   const rmPullBtn = document.getElementById('rmPullBtn');
   if (rmPullBtn) rmPullBtn.onclick = async () => {
     const g = currentGame();
     g.roadmap.repo = document.getElementById('rmRepo').value.trim() || g.roadmap.repo;
-    g.roadmap.path = document.getElementById('rmPath').value.trim() || g.roadmap.path;
+    g.roadmap.path = document.getElementById('rmPath').value.trim();   // empty = repo root, so no fallback
+    g.roadmap.editedAt = new Date().toISOString();
     rmPullBtn.textContent = 'Pulling…'; rmPullBtn.disabled = true;
     await fetchRoadmap(g);
     renderMain();

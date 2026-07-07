@@ -5,7 +5,22 @@ feedback inbox land here so they survive outside Supabase.
 
 ## Backlog
 
-### PT-B1 — Lower-friction GitHub repo association (HIGH, research first)
+### PT-B1 — Lower-friction GitHub repo association — ✅ SHIPPED 2026-07-07
+Research outcome: GitHub's OAuth device flow and token endpoints are
+CORS-blocked from browsers, so real OAuth needs a relay server — wrong fit for
+a static GH-Pages app. Built instead:
+- **Root-cause fix for "won't save source"**: `mergeGame` used
+  `local.roadmap || incoming.roadmap`, so every client's back-filled default
+  shadowed the value saved in the cloud. Saved sources now carry `editedAt`
+  and the newest explicit edit wins the merge.
+- **📂 Load my repos**: unauthenticated GitHub REST fills a datalist on the
+  Repo box (owner taken from the box, defaults to michaelnocito).
+- **📁 Load folders**: lists the repo's top-level folders; empty folder now
+  means repo root (Pull no longer silently keeps the old path).
+
+Original item, kept for history:
+
+#### (was) Lower-friction GitHub repo association (HIGH, research first)
 *From inbox item `mr9v90iln99bl` (2026-07, Mike):* typing Repo (owner/repo) +
 Folder on a new project doesn't stick as a saved source; associating a new
 project with the right repo is too manual.
