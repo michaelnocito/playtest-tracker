@@ -5,6 +5,16 @@ feedback inbox land here so they survive outside Supabase.
 
 ## Backlog
 
+### PT-B2 — Stop losing Claude's triage state on merge — ✅ SHIPPED 2026-07-09
+A run present on both the local browser and the cloud was merged by taking the
+local copy **wholesale**, which silently dropped `results[id].claude` (the
+fixed / working / roadmap / need-info badge) whenever it had arrived via a
+cloud pull — the recurring "claude fields re-lost again" symptom seen in
+Deadroot's DR-#043 notes. Fixed in `mergeGame`: same-id runs now merge
+per-result — the human's `status`/`note` wins (unless still untested, in which
+case the cloud verdict fills in), and the `claude` field is carried by newest
+`.at` so a badge can never vanish on sync. Bugs merged by id, debrief field-wise.
+
 ### PT-B1 — Lower-friction GitHub repo association — ✅ SHIPPED 2026-07-07
 Research outcome: GitHub's OAuth device flow and token endpoints are
 CORS-blocked from browsers, so real OAuth needs a relay server — wrong fit for
