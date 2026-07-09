@@ -1,12 +1,352 @@
 {
  "runs": [
   {
-   "id": "dr-025-032",
-   "build": "DR-#025→#032 — Grabber + reabsorb + C-backlog",
-   "date": "2026-07-05T21:00:00.000Z",
-   "results": {},
+   "id": "mrdtext93bglz",
    "bugs": [],
-   "debrief": {}
+   "date": "2026-07-09T18:03:19.341Z",
+   "build": "(unspecified build)",
+   "debrief": {
+    "q1": "",
+    "q2": "",
+    "q3": "",
+    "q4": "",
+    "q5": ""
+   },
+   "results": {
+    "0:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:5": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:5": {
+     "note": "",
+     "status": "untested"
+    },
+    "3:0": {
+     "note": "4",
+     "status": "pass"
+    },
+    "3:1": {
+     "note": "too easy due to biomass accumation by level 3. ",
+     "status": "fail",
+     "claude": {
+      "state": "roadmap",
+      "note": "DR-#047 balance research: biomass carryover gutting L3 difficulty. Bundled with your inbox note on the same thing.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    },
+    "3:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:4": {
+     "note": "4",
+     "status": "pass"
+    },
+    "7:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:3": {
+     "note": "Parital. I can see it, but it should really glow and the glow get stronger as she gets closer to opending , it can pulse and grow with each enemy dead, make their soul fly to queen to power the spell.",
+     "status": "fail",
+     "claude": {
+      "state": "roadmap",
+      "note": "DR-#046 juice: doorway glow ramps as the Queen nears opening, pulses per kill, souls fly from dead raiders to the Queen to power the spell. Great tell — keeping your wording.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    },
+    "7:4": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:5": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:6": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:8": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:9": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:10": {
+     "note": "",
+     "status": "pass"
+    },
+    "7:11": {
+     "note": "",
+     "status": "pass"
+    }
+   }
+  },
+  {
+   "id": "mrcmq1lt94by7",
+   "bugs": [],
+   "date": "2026-07-08T22:08:13.985Z",
+   "build": "(unspecified build)",
+   "debrief": {
+    "q1": "",
+    "q2": "",
+    "q3": "",
+    "q4": "",
+    "q5": ""
+   },
+   "results": {
+    "0:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:4": {
+     "note": "",
+     "status": "pass"
+    },
+    "0:5": {
+     "note": "",
+     "status": "pass"
+    },
+    "1:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "1:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "1:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "1:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "2:5": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:1": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:2": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "3:4": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:1": {
+     "note": "",
+     "status": "pass"
+    }
+   }
+  },
+  {
+   "id": "mr9sg9ygi9n4r",
+   "bugs": [],
+   "date": "2026-07-06T22:25:17.416Z",
+   "build": "(unspecified build)",
+   "debrief": {
+    "q1": "",
+    "q2": "",
+    "q3": "",
+    "q4": "",
+    "q5": ""
+   },
+   "results": {
+    "3:1": {
+     "note": "to easy, enemies die too quickly to pose a real threat",
+     "status": "fail",
+     "claude": {
+      "state": "roadmap",
+      "note": "Folds into DR-#047 balance research (too-easy root cause).",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    },
+    "6:0": {
+     "note": "grabbers are 1 shotted enimies, they should not have an attack value",
+     "status": "fail",
+     "claude": {
+      "state": "fixed",
+      "note": "DR-#043b: grabber comes from evolving a zombie and only slows + rots (no attack value). Retest on current build.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    },
+    "6:1": {
+     "note": "grabber looks like a regular zombie",
+     "status": "fail",
+     "claude": {
+      "state": "fixed",
+      "note": "DR-#045: grabber is the pack’s amber-tinted ROAR pose — visibly distinct from the green walker. Retest.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    },
+    "6:2": {
+     "note": "it attacks and one shots enemies",
+     "status": "fail",
+     "claude": {
+      "state": "fixed",
+      "note": "DR-#043b: grabber has no shot/bite — slow aura + rot DoT only. Retest.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    },
+    "6:3": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:4": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:5": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:6": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:7": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:8": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:9": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:10": {
+     "note": "they shold be more like rotting wood, grey and dark browns.",
+     "status": "fail",
+     "claude": {
+      "state": "fixed",
+      "note": "Hedges were removed entirely in DR-#034 (palette is ZOMBIE/SPIKES); rotting-wood look is moot. Mark pass if the old hedges are truly gone.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    },
+    "6:11": {
+     "note": "",
+     "status": "pass"
+    },
+    "6:12": {
+     "note": "",
+     "status": "pass"
+    }
+   }
+  },
+  {
+   "id": "mr8g2qo58k15j",
+   "bugs": [],
+   "date": "2026-07-05T23:51:04.325Z",
+   "build": "(unspecified build)",
+   "debrief": {
+    "q1": "",
+    "q2": "",
+    "q3": "",
+    "q4": "",
+    "q5": ""
+   },
+   "results": {
+    "0:0": {
+     "note": "",
+     "status": "pass"
+    },
+    "1:0": {
+     "note": "getting closer",
+     "status": "fail",
+     "claude": {
+      "state": "fixed",
+      "note": "Since this note: DR-#042 goal line (\"survive N raids — the Queen opens the way\") + DR-#043a paused intro modals. Retest zero-instruction clarity on current build.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
+    }
+   }
+  },
+  {
+   "id": "dr-025-032",
+   "bugs": [],
+   "date": "2026-07-05T21:00:00.000Z",
+   "build": "DR-#025→#032 — Grabber + reabsorb + C-backlog",
+   "debrief": {},
+   "results": {}
   },
   {
    "id": "mr88g5dg72u9b",
@@ -43,7 +383,12 @@
     },
     "2:4": {
      "note": "too easy, right now i can create a bunch of spitters quickly and just ride them all the way through to level 12.  no need for other tower types, we need to enocurage startic use of towers in type, quantity and placement",
-     "status": "fail"
+     "status": "fail",
+     "claude": {
+      "state": "fixed",
+      "note": "Spitter-spam era is gone: DR-#042 levels + fixed floor plans, DR-#043b evolve choice, smarter raid (DR-#041). Remaining too-easy is DR-#047 balance. Retest.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
     },
     "3:0": {
      "note": "it has a good base rythm",
@@ -51,7 +396,12 @@
     },
     "3:2": {
      "note": "current difficutly is too easy, engaging and novel but easy to figure out how to win, maybe we should start them off with a random maze pattern each level to add to  variety.",
-     "status": "fail"
+     "status": "fail",
+     "claude": {
+      "state": "fixed",
+      "note": "DR-#042 gave each level its own fixed maze/floor plan; variety-per-run beyond that folds into DR-#047. Retest.",
+      "at": "2026-07-09T19:30:00.000Z"
+     }
     },
     "3:3": {
      "note": "yes, unique and has great potential",
@@ -109,6 +459,10 @@
     "q5": ""
    },
    "results": {
+    "0:0": {
+     "note": "",
+     "status": "pass"
+    },
     "0:1": {
      "note": "",
      "status": "pass"
@@ -214,6 +568,238 @@
   }
  ],
  "inbox": [
+  {
+   "id": "mrdui9arkuxzp",
+   "tag": "bug",
+   "date": "2026-07-09T18:33:53.811Z",
+   "note": "BLOCKER — DR-#046 UI batch: boss HP bar moves off the bottom build palette (top ticker row is reserved space).",
+   "text": "boss health bar covers up the tower choices on bottom of screen",
+   "status": "roadmap"
+  },
+  {
+   "id": "mrdugr9mb3h7k",
+   "tag": "note",
+   "date": "2026-07-09T18:32:43.786Z",
+   "note": "DR-#046: when the Queen is reachable by 2+ paths, the raid splits randomly between them so every approach needs defense.",
+   "text": "on level 3 the queen is exposed on 2 sides. in the cases of queen can be accessed from muitlple paths have mobs split randomnly between the two to make player defend",
+   "status": "roadmap"
+  },
+  {
+   "id": "mrduc7hsdunr9",
+   "tag": "note",
+   "date": "2026-07-09T18:29:11.536Z",
+   "note": "DR-#046 art pass: audit assets/raw/ FIRST (Engvee pack lesson from DR-#045), reskin every enemy we can from the same pack, then report exactly what still needs sourcing.",
+   "text": "add art to remaining enemies. we tested on thief. let me know what needs to be sourced. same source we used for zombies and thief. check what we have first.",
+   "status": "roadmap"
+  },
+  {
+   "id": "mrdu6ntzcwf77",
+   "tag": "bug",
+   "date": "2026-07-09T18:24:52.775Z",
+   "note": "DR-#047 balance, research-first: biomass carryover into L3 makes it trivial. Research TD economy leveling (per-level reset/cap/soft-tax), then tune. Same item as today’s 3:1 fail.",
+   "text": "difficulty imbalance, too easy on 3rd level due to all the biomass the player has at the start of level. biomass resource leveling and research needed.",
+   "status": "roadmap"
+  },
+  {
+   "id": "mrdtx3o0ahx4z",
+   "tag": "note",
+   "date": "2026-07-09T18:17:26.736Z",
+   "note": "DR-#048 healer unit: evolvable zombie type that heals nearby units, killable. Slots into the evolve menu next to GRABBER.",
+   "text": "need a way to for zombies to heal. make this an upgradable zomibe type . it heals units near it, can be killed by enemies",
+   "status": "roadmap"
+  },
+  {
+   "id": "mrdtr7nl9iae2",
+   "tag": "note",
+   "date": "2026-07-09T18:12:51.969Z",
+   "note": "DR-#046 UI batch: desktop-first size pass — key elements and ALL text scaled up (echoes the 15-inch-laptop readability fail from DR-#001).",
+   "text": "overall the size needs to be adjusted. optimize it for desktop, increasing the size of the important elements AND THE text.",
+   "status": "roadmap"
+  },
+  {
+   "id": "mrdtkqa6jdbu3",
+   "tag": "idea",
+   "date": "2026-07-09T18:07:49.518Z",
+   "note": "DR-#046 art pass: Queen re-drawn from the same Engvee pack (check pack poses first, e.g. an Idle/Roar set, before declaring anything asset-gated).",
+   "text": "update queen animation from same pack / art as zombie.",
+   "status": "roadmap"
+  },
+  {
+   "id": "mrcmvcs95t0y0",
+   "tag": "bug",
+   "date": "2026-07-08T22:12:21.753Z",
+   "note": "DR-#043a: stage-boundary info (level intro, wave-start story beats, doorway) is now a PAUSED modal — sim frozen, raid does not spawn, until you tap/Enter it away. Mid-wave teach banners unchanged (say if those bother you too).",
+   "text": "the info text between stages ovelaps the action of the stage, pause hte stage until the user manually clears the text info between stages .",
+   "status": "fixed",
+   "actions": [
+    {
+     "a": "incorporated",
+     "at": "2026-07-08T22:19:17.186Z",
+     "ref": "DR-#043a"
+    }
+   ]
+  },
+  {
+   "id": "mrcmuaryusmx7",
+   "tag": "idea",
+   "date": "2026-07-08T22:11:32.494Z",
+   "note": "DR-#043b + DR-#045: palette is ZOMBIE + SPIKES; tap a zombie → EVOLVE → GRABBER (30◈, slow aura + rot DoT 2.5/s). Per your correction the grabber sprite is now FROM THE SAME PACK: the Engvee zombie model in its ROAR animation (arms-out grasping), amber-tinted at pack time (new grabber_atlas). Morph animation kept.",
+   "text": "make it just one choice for monster, the zomibe, zombies can be ugpgraded to grabbers who have the low level dot the walls used to have. we need a nice new animation when they turn to grabbers that matches. the quality of the zombie , preferrably from the same art pack.go for immediate building, consider it a blocker",
+   "status": "fixed",
+   "actions": [
+    {
+     "a": "incorporated",
+     "at": "2026-07-08T22:19:17.186Z",
+     "ref": "DR-#043b"
+    },
+    {
+     "a": "incorporated",
+     "at": "2026-07-09T01:53:32.850Z",
+     "ref": "DR-#045"
+    }
+   ]
+  },
+  {
+   "id": "mramcq71f10e0",
+   "tag": "note",
+   "date": "2026-07-07T12:22:20.317Z",
+   "note": "DR-#041 first slice: raiders FIGHT BACK (wounded raider + nearby party hunts the zombie that hit them, 4s aggro), ~65% EXPLORE a search point on their side of the burrow instead of railing, and PAUSE 0.6-1.3s to rummage at it. Next candidates: loot/torch draws, retreat-when-wounded, role formations. Give it a feel pass.",
+   "text": "this should mimic the feel of a dungeon crawler but we are the dungeon and the enemy are the heros. we need to adjust things like combat pacing (right now it's more of a follow a path then the enemies free exploring. the enemies should act like player characters as much as we can make them",
+   "status": "fixed",
+   "actions": [
+    {
+     "at": "2026-07-07T00:00:00.000Z",
+     "note": "DR-#041 adventurer AI slice shipped (fight-back aggro + explore waypoints + search pauses); more crawler behaviors staged as next slices.",
+     "type": "incorporated"
+    }
+   ]
+  },
+  {
+   "id": "mr9u16g922iqw",
+   "tag": "note",
+   "date": "2026-07-06T23:09:32.265Z",
+   "note": "",
+   "text": "screen looks a bit too busy and it's hard to decide wheere to build hedges. do away with hedges for now.  but split the screne up into 4 distinct paths the player need to defend to help them orientate. make it like we  fighting on the top of  castle walls, all 4 walls converging on hive opending.walls . priority build. consider it blocker and move on it.",
+   "status": "fixed",
+   "actions": [
+    {
+     "at": "2026-07-06T12:00:00Z",
+     "act": "incorporated",
+     "note": "DR-#034 CASTLE WALLS shipped: hedges removed, map is now 4 distinct 4-wide paths (castle-wall stone with battlements) converging on the hive opening. Please retest the new layout."
+    }
+   ]
+  },
+  {
+   "id": "mr9twe3sanrj1",
+   "tag": "bug",
+   "date": "2026-07-06T23:05:48.904Z",
+   "note": "",
+   "text": "text incorrectly says pick a \"brush\" on screen when referring to monster and building choices",
+   "status": "fixed",
+   "actions": [
+    {
+     "at": "2026-07-06T12:00:00Z",
+     "act": "incorporated",
+     "note": "DR-#034: onboarding text now says \"PICK A UNIT, THEN TAP/CLICK A PATH TO BUILD\" - no more \"brush\"."
+    }
+   ]
+  },
+  {
+   "id": "mr9tu5cq277pr",
+   "tag": "bug",
+   "date": "2026-07-06T23:04:04.250Z",
+   "note": "",
+   "text": "the shake on the death recap screen is persistant and makes it hard to read. either remove or reduce it to 3 seconds",
+   "status": "fixed",
+   "actions": [
+    {
+     "at": "2026-07-06T12:00:00Z",
+     "act": "incorporated",
+     "note": "DR-#034: root cause found - shake decay never ran on end screens, so it froze forever. Now settles in under a second on the death recap."
+    }
+   ]
+  },
+  {
+   "id": "mr9sw5pen9i9u",
+   "tag": "note",
+   "date": "2026-07-06T22:37:38.402Z",
+   "note": "DR-#033: scaled down SPITTER damage (13->9) + range, buffed enemy HP so the rot-maze + zombies both matter. Tunable in ?dev=1.",
+   "text": "spitters are too strong, i like the damage on the rot maze and the player should rely on the maze buidling as well as zomibies, scale down their damage",
+   "status": "fixed",
+   "actions": [
+    {
+     "at": "2026-07-06T00:00:00.000Z",
+     "act": "incorporated",
+     "note": "DR-#033: scaled down SPITTER damage (13->9) + range, buffed enemy HP so the rot-maze + zombies both matter. Tunable in ?dev=1."
+    }
+   ]
+  },
+  {
+   "id": "mr9std7xx3nsa",
+   "tag": "bug",
+   "date": "2026-07-06T22:35:28.173Z",
+   "note": "DR-#033: tapping an already-placed unit while a build brush is active now auto-deselects the brush and selects that unit.",
+   "text": "deslectiing units need to happen automatically when another item or action is selected. currently we need to click on the selected unit to deselect",
+   "status": "fixed",
+   "actions": [
+    {
+     "at": "2026-07-06T00:00:00.000Z",
+     "act": "incorporated",
+     "note": "DR-#033: tapping an already-placed unit while a build brush is active now auto-deselects the brush and selects that unit."
+    }
+   ]
+  },
+  {
+   "id": "mr9spsxahulot",
+   "tag": "idea",
+   "date": "2026-07-06T22:32:41.902Z",
+   "note": "DR-#033: seed cut from 2 full rings to 1-2 short random stubs - almost the whole board is yours to draw, far less to undo. Random each run for variety.",
+   "text": "give the player just one hedge wall to start, make it on them to draw their own maze and add zombies. we dont wna them to have to undo too much to controlthe board",
+   "status": "fixed",
+   "actions": [
+    {
+     "at": "2026-07-06T00:00:00.000Z",
+     "act": "incorporated",
+     "note": "DR-#033: seed cut from 2 full rings to 1-2 short random stubs - almost the whole board is yours to draw, far less to undo. Random each run for variety."
+    }
+   ]
+  },
+  {
+   "id": "test_action_log",
+   "tag": "strength",
+   "date": "2026-07-06T00:04:10.246Z",
+   "note": "",
+   "text": "The corpse animation looks really crisp and readable",
+   "status": "roadmap",
+   "actions": [
+    {
+     "at": "2026-07-05T23:04:10.247Z",
+     "note": "Confirmed visual strength — good readability under stress",
+     "type": "noted"
+    },
+    {
+     "at": "2026-07-05T23:34:10.247Z",
+     "ref": "DR-#033",
+     "note": "Prioritize polish: extend corpse animation set for more variety",
+     "type": "incorporated"
+    }
+   ]
+  },
+  {
+   "id": "mr88v6u3ohpdc",
+   "tag": "strength",
+   "date": "2026-07-05T20:29:14.715Z",
+   "note": "",
+   "text": "the dodge feel is really satisfying",
+   "status": "roadmap",
+   "actions": [
+    {
+     "at": "2026-07-06T00:08:14.563Z",
+     "note": "PRIORITY: Confirmed player strength. Dodge feel is a core engagement hook — lean into this for next sprint.",
+     "type": "noted"
+    }
+   ]
+  },
   {
    "id": "mr6qu0gz2ez3u",
    "tag": "note",
@@ -366,120 +952,128 @@
    "pass": "7. New this build — DR-#025→#032 (Grabber, reabsorb, drag-paint, sell, rot, gates)",
    "items": [
     {
-     "t": "GRABBER slows enemies",
-     "h": "Pick GRABBER (45◈), place one on a lane. Watch enemies cross its amber aura ring — they should visibly CRAWL while inside it and speed back up once they leave."
+     "h": "Pick GRABBER (45◈), place one on a lane. Watch enemies cross its amber aura ring — they should visibly CRAWL while inside it and speed back up once they leave.",
+     "t": "GRABBER slows enemies"
     },
     {
-     "t": "GRABBER looks distinct from a ZOMBIE",
-     "h": "A grabber should be unmistakable next to a normal zombie: amber (not lime) base disc, a dashed amber ring showing its slow radius, and wiggling grasping claw-arms. You should tell them apart at a glance."
+     "h": "A grabber should be unmistakable next to a normal zombie: amber (not lime) base disc, a dashed amber ring showing its slow radius, and wiggling grasping claw-arms. You should tell them apart at a glance.",
+     "t": "GRABBER looks distinct from a ZOMBIE"
     },
     {
-     "t": "GRABBER never shoots",
-     "h": "A grabber only slows — it should never fire an acid shot. Only the ZOMBIE bites/shoots."
+     "h": "A grabber only slows — it should never fire an acid shot. Only the ZOMBIE bites/shoots.",
+     "t": "GRABBER never shoots"
     },
     {
-     "t": "Reabsorption cooldown fires when a unit dies",
-     "h": "Let enemies kill one of your zombies/grabbers. Right after it dies, try to place a NEW zombie or grabber: it should be REFUSED with a 'REABSORBING Ns' message, and both unit buttons dim + count down ~4s. After the countdown you can build units again."
+     "h": "Let enemies kill one of your zombies/grabbers. Right after it dies, try to place a NEW zombie or grabber: it should be REFUSED with a 'REABSORBING Ns' message, and both unit buttons dim + count down ~4s. After the countdown you can build units again.",
+     "t": "Reabsorption cooldown fires when a unit dies"
     },
     {
-     "t": "Cooldown does NOT block hedges or salvage",
-     "h": "While the 'reabsorbing' countdown is running: you should STILL be able to place HEDGE walls, and selling your own unit yourself (SALVAGE) should NOT start the cooldown."
+     "h": "While the 'reabsorbing' countdown is running: you should STILL be able to place HEDGE walls, and selling your own unit yourself (SALVAGE) should NOT start the cooldown.",
+     "t": "Cooldown does NOT block hedges or salvage"
     },
     {
-     "t": "Drag-to-paint hedge walls",
-     "h": "Pick HEDGE, then press and DRAG across several tiles in one motion — a whole wall should appear in one stroke (not one tap per tile). Zombies/grabbers should still be one tap each (no drag-spam)."
+     "h": "Pick HEDGE, then press and DRAG across several tiles in one motion — a whole wall should appear in one stroke (not one tap per tile). Zombies/grabbers should still be one tap each (no drag-spam).",
+     "t": "Drag-to-paint hedge walls"
     },
     {
-     "t": "Green/red ghost build cursor",
-     "h": "With a brush selected, hover over the field: a filled ghost square shows where it'll drop — green (in the brush's color) where it's allowed, RED with an X where it isn't (on the hive, a gate, when you can't afford it, or where it would pinch the path)."
+     "h": "With a brush selected, hover over the field: a filled ghost square shows where it'll drop — green (in the brush's color) where it's allowed, RED with an X where it isn't (on the hive, a gate, when you can't afford it, or where it would pinch the path).",
+     "t": "Green/red ghost build cursor"
     },
     {
-     "t": "Sell / remove hedges & zombies",
-     "h": "Tap one of YOUR hedges with no brush active → a REMOVE button appears and refunds a few ◈. Tap a starting (seeded) hedge → REMOVE says 'free'. Tap a zombie/grabber → SALVAGE refunds biomass. The lane should re-open after removal."
+     "h": "Tap one of YOUR hedges with no brush active → a REMOVE button appears and refunds a few ◈. Tap a starting (seeded) hedge → REMOVE says 'free'. Tap a zombie/grabber → SALVAGE refunds biomass. The lane should re-open after removal.",
+     "t": "Sell / remove hedges & zombies"
     },
     {
-     "t": "Long maze = more rot damage",
-     "h": "Build a long winding maze. Enemies taking the long way should take steadily INCREASING green 'rot' damage the longer they're inside (green motes rising off them) — a long maze should visibly wear the horde down vs a short one."
+     "h": "Build a long winding maze. Enemies taking the long way should take steadily INCREASING green 'rot' damage the longer they're inside (green motes rising off them) — a long maze should visibly wear the horde down vs a short one.",
+     "t": "Long maze = more rot damage"
     },
     {
-     "t": "Gate-opening flare + banner",
-     "h": "At wave 2 the WEST gate should flash/flare with a banner 'THE WEST GATE OPENS'. At wave 5 the NORTH & SOUTH gates flare together. You should clearly SEE on the field which new entrance just opened."
+     "h": "At wave 2 the WEST gate should flash/flare with a banner 'THE WEST GATE OPENS'. At wave 5 the NORTH & SOUTH gates flare together. You should clearly SEE on the field which new entrance just opened.",
+     "t": "Gate-opening flare + banner"
     },
     {
-     "t": "Hedges look like leafy topiary",
-     "h": "Hedges should read as leafy bushes — dappled light/dark green clumps with a lit top edge — not flat green slabs. Judge if it 'pops' at real size."
+     "h": "Hedges should read as leafy bushes — dappled light/dark green clumps with a lit top edge — not flat green slabs. Judge if it 'pops' at real size.",
+     "t": "Hedges look like leafy topiary"
     },
     {
-     "t": "Boons & text match the current loop",
-     "h": "When 'THE HIVE ADAPTS' offers boons between waves, they should mention things you can actually build (Zombie / Grabber / Hedge — e.g. GRASPING REACH, CHOKEHOLD, THORNED HEDGES). No leftover 'Spore/Rootmass/mutate a corpse' wording anywhere (onboarding hint should say pick a brush & tap the field, not 'tap a corpse')."
+     "h": "When 'THE HIVE ADAPTS' offers boons between waves, they should mention things you can actually build (Zombie / Grabber / Hedge — e.g. GRASPING REACH, CHOKEHOLD, THORNED HEDGES). No leftover 'Spore/Rootmass/mutate a corpse' wording anywhere (onboarding hint should say pick a brush & tap the field, not 'tap a corpse').",
+     "t": "Boons & text match the current loop"
     },
     {
-     "t": "Nothing regressed after the cleanup",
-     "h": "Play a full run start to finish: waves spawn from the right gates, biomass in/out is correct, pause/mute/speed toggle, death + endless all still work (a big chunk of dead code was removed this build — make sure the basics are intact)."
+     "h": "Play a full run start to finish: waves spawn from the right gates, biomass in/out is correct, pause/mute/speed toggle, death + endless all still work (a big chunk of dead code was removed this build — make sure the basics are intact).",
+     "t": "Nothing regressed after the cleanup"
     }
    ],
    "custom": true,
    "retired": true,
    "sprintLabel": "DR-#025→#032",
-   "completedBuild": "DR-#025→#032",
-   "completedDate": "2026-07-09T00:00:00.000Z"
+   "completedDate": "2026-07-09T00:00:00.000Z",
+   "completedBuild": "DR-#025→#032"
   },
   {
    "pass": "7. New this build — DR-#042→#045 (Levels · Queen doorway · evolve-to-Grabber · paused modals · top ticker)",
-   "custom": true,
-   "retired": false,
-   "sprintLabel": "DR-#042→#045",
-   "addedDate": "2026-07-09T00:00:00.000Z",
    "items": [
     {
-     "t": "Level 1 starts you building around the Queen",
-     "h": "New run opens on LEVEL 1 — THE BURROW GATE. The Queen is already placed for you at the deep spot (you no longer place her). You build the dungeon of zombies/spikes AROUND her."
+     "h": "New run opens on LEVEL 1 — THE BURROW GATE. The Queen is already placed for you at the deep spot (you no longer place her). You build the dungeon of zombies/spikes AROUND her.",
+     "t": "Level 1 starts you building around the Queen"
     },
     {
-     "t": "Only ZOMBIE and SPIKES to build",
-     "h": "The build palette should show just two options — ZOMBIE and SPIKES. No doors, no hedges, no separate GRABBER button (grabber now comes from evolving a zombie)."
+     "h": "The build palette should show just two options — ZOMBIE and SPIKES. No doors, no hedges, no separate GRABBER button (grabber now comes from evolving a zombie).",
+     "t": "Only ZOMBIE and SPIKES to build"
     },
     {
-     "t": "Survive the waves → the Queen opens the doorway",
-     "h": "Clear the level's last wave. You should get a paused 'THE QUEEN OPENS THE WAY' beat, the east exit arch flares purple, your surviving units are refunded as biomass, then the next level begins with a fresh build phase and restored hive HP."
+     "h": "Clear the level's last wave. You should get a paused 'THE QUEEN OPENS THE WAY' beat, the east exit arch flares purple, your surviving units are refunded as biomass, then the next level begins with a fresh build phase and restored hive HP.",
+     "t": "Survive the waves → the Queen opens the doorway"
     },
     {
-     "t": "You can see where the exit will open",
-     "h": "All level long a faint sealed arch is drawn on the east wall, so you always know which way you're heading before it actually opens."
+     "h": "All level long a faint sealed arch is drawn on the east wall, so you always know which way you're heading before it actually opens.",
+     "t": "You can see where the exit will open"
     },
     {
-     "t": "Evolve a ZOMBIE into a GRABBER",
-     "h": "Tap one of your placed zombies → EVOLVE → GRABBER (30◈). It keeps its slow aura and gains a green 'rot' damage-over-time (~2.5/s) on anything inside the aura. A one-time teach banner should explain it on your first zombie."
+     "h": "Tap one of your placed zombies → EVOLVE → GRABBER (30◈). It keeps its slow aura and gains a green 'rot' damage-over-time (~2.5/s) on anything inside the aura. A one-time teach banner should explain it on your first zombie.",
+     "t": "Evolve a ZOMBIE into a GRABBER"
     },
     {
-     "t": "Grabber looks like the SAME art pack",
-     "h": "An evolved grabber should read as the same zombie model but amber-tinted with arms out/grasping (the pack's ROAR pose) — clearly the same art family as the green walking zombie, NOT a mismatched blob."
+     "h": "An evolved grabber should read as the same zombie model but amber-tinted with arms out/grasping (the pack's ROAR pose) — clearly the same art family as the green walking zombie, NOT a mismatched blob.",
+     "t": "Grabber looks like the SAME art pack"
     },
     {
-     "t": "Idle zombies roam, then freeze on prey",
-     "h": "Zombies with nothing to fight should shamble a little (under ~1 tile) around their post. The instant a raider comes into range they should snap still and attack."
+     "h": "Zombies with nothing to fight should shamble a little (under ~1 tile) around their post. The instant a raider comes into range they should snap still and attack.",
+     "t": "Idle zombies roam, then freeze on prey"
     },
     {
-     "t": "Story beats PAUSE the game (no overlap)",
-     "h": "Level intros, wave-start beats (THE SCOUTS / PURGE / BUTCHER / etc.) and 'THE QUEEN OPENS THE WAY' should DIM and PAUSE — the raid must NOT spawn until you tap or press Enter to dismiss. Nothing should print over the live action."
+     "h": "Level intros, wave-start beats (THE SCOUTS / PURGE / BUTCHER / etc.) and 'THE QUEEN OPENS THE WAY' should DIM and PAUSE — the raid must NOT spawn until you tap or press Enter to dismiss. Nothing should print over the live action.",
+     "t": "Story beats PAUSE the game (no overlap)"
     },
     {
-     "t": "Small messages ride a slim top ticker",
-     "h": "In-play notices (enemy first-seen, ambush, wave repelled, ability activations, reabsorb refund) should appear as a slim pill docked at the very top rock row — one at a time, no screen dim, never covering the field."
+     "h": "In-play notices (enemy first-seen, ambush, wave repelled, ability activations, reabsorb refund) should appear as a slim pill docked at the very top rock row — one at a time, no screen dim, never covering the field.",
+     "t": "Small messages ride a slim top ticker"
     },
     {
-     "t": "The raid plays smart",
-     "h": "The adventurer raid should behave like real players — picking targets, splitting at junctions, fighting back — not just walking a single line into the hive."
+     "h": "The adventurer raid should behave like real players — picking targets, splitting at junctions, fighting back — not just walking a single line into the hive.",
+     "t": "The raid plays smart"
     },
     {
-     "t": "All 3 levels are completable",
-     "h": "Play through Level 1 → 2 → 3 to the victory screen. NOTE: L2/L3 aren't fully balance-tuned yet, so log where a difficulty spike feels UNFAIR rather than treating a loss as a bug."
+     "h": "Play through Level 1 → 2 → 3 to the victory screen. NOTE: L2/L3 aren't fully balance-tuned yet, so log where a difficulty spike feels UNFAIR rather than treating a loss as a bug.",
+     "t": "All 3 levels are completable"
     },
     {
-     "t": "Nothing basic regressed",
-     "h": "One full run: biomass earns/spends correctly, pause (P) / mute (M) / speed toggle all work, and death → restart is clean."
+     "h": "One full run: biomass earns/spends correctly, pause (P) / mute (M) / speed toggle all work, and death → restart is clean.",
+     "t": "Nothing basic regressed"
     }
-   ]
+   ],
+   "custom": true,
+   "retired": false,
+   "addedDate": "2026-07-09T00:00:00.000Z",
+   "sprintLabel": "DR-#042→#045"
   }
- ]
+ ],
+ "roadmap": {
+  "md": "## ROADMAP — pick what to build next\n\n### A. Direction / shippable\n- **A3 — Survival to shippable.** Balance pass, dead-code cleanup, art polish, GAME_BIBLE Part 4 pre-submission checklist. The finish line for this game. Effort: **M**. *(Recommended once the depth items below are in.)*\n- ~~A1 Mode select~~ — not needed while there's a single mode; revisit only if/when the tactics game exists.\n- ~~A2 Quest tactics (FFT)~~ — **PARKED** as a separate future game (see Decisions above).\n\n### B. Your requested additions\n- ~~**B1 — Grabber zombie.**~~ **DONE (DR-#025).** 3rd build brush (GRABBER, 45◈, range 2.0, slow 0.40): a zombie that slows every enemy in its amber snare aura instead of shooting. Distinct look = amber disc + dashed aura ring + grasping clawed tendrils. Destructible, growable from a hedge. Tune slow%/range/cost on playtest.\n- ~~**B2 — Reabsorption cooldown.**~~ **DONE (DR-#025), GLOBAL Hive-wide (chosen over per-tile).** 4s lockout on raising a NEW zombie (fresh place AND grow) after any zombie dies; hedges/salvage exempt. Palette buttons dim + countdown; cursor red while cooling. Tune the 4s on playtest.\n\n### C. Maze / build polish — ✅ ALL DONE (DR-#026 → #032)\n- ~~C1 Drag-to-paint walls~~ **DONE (DR-#028)** — hold+drag the HEDGE brush lays a wall in one stroke.\n- ~~C2 Ghost + red/green drag preview~~ **DONE (DR-#028)** — filled ghost cursor in the brush hue, red+X when blocked.\n- ~~C3 Nicer art~~ **DONE (DR-#031)** — leafy dappled topiary + top-face highlight (clip-free/cheap). *Full 47-blob atlas + separate zombie-in-wall art judged not worth the weight; grown zombie already reads distinct.*\n- ~~C4 Path-length reward~~ **DONE (DR-#030)** — creeping-rot DoT ramps with time spent walking the maze.\n- ~~C5 Sell/remove for refund~~ **DONE (DR-#027)** — tap a hedge → REMOVE (60% refund for paid, free for seeded); zombie SALVAGE already existed.\n- ~~C6 Rip dead code~~ **DONE (DR-#032)** — removed spiderweb system + spawnWarden + applyTier2 (feast/mutate menu tangle left as harmless).\n- ~~C7 Rework boon + onboarding text~~ **DONE (DR-#026)** — grabber/hedge boons replace dead Spore/Rootmass ones; palette onboarding replaces \"TAP A CORPSE\".\n- **C8 Balance pass** — ⏳ NEEDS MIKE'S PLAYTEST. Kill bounty vs hedge/zombie/grabber costs, reabsorb 4s, grabber slow/range, maze-DoT ramp, wave difficulty. **M**\n- ~~C9 Gate-escalation banners~~ **DONE (DR-#029)** — directional banners + just-opened gate flare.\n\n### D. Content / progression — needs Mike\n- **D1 Human roster** (Knight→troop, Barbarian→incin, Halberdier→sweeper). ⛔ ASSET-GATED — drop the Engvee Knight/Barbarian/Halberdier sheets in `assets/raw/` (per SPR-#003) and I'll wire + pack them. **M**\n- **D2 Boss waves + named assaults tuned to the new loop.** ⏳ NEEDS PLAYTEST FEEL (content + balance). **M**\n- **D3 Meta (Mycelial Network) re-tuned for buy-and-place.** ⏳ Mostly still relevant; could add maze-flavored nodes (grabber/hedge/maze-DoT) — needs balance. **M**\n\n---",
+  "file": "DEADROOT_HANDOFF.md",
+  "path": "deadroot",
+  "repo": "michaelnocito/play-area",
+  "error": "",
+  "fetchedAt": "2026-07-05T22:10:47.471Z"
+ }
 }
