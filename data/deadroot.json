@@ -417,6 +417,68 @@
      "t": "Nothing regressed after the cleanup",
      "h": "Play a full run start to finish: waves spawn from the right gates, biomass in/out is correct, pause/mute/speed toggle, death + endless all still work (a big chunk of dead code was removed this build — make sure the basics are intact)."
     }
+   ],
+   "custom": true,
+   "retired": true,
+   "sprintLabel": "DR-#025→#032",
+   "completedBuild": "DR-#025→#032",
+   "completedDate": "2026-07-09T00:00:00.000Z"
+  },
+  {
+   "pass": "7. New this build — DR-#042→#045 (Levels · Queen doorway · evolve-to-Grabber · paused modals · top ticker)",
+   "custom": true,
+   "retired": false,
+   "sprintLabel": "DR-#042→#045",
+   "addedDate": "2026-07-09T00:00:00.000Z",
+   "items": [
+    {
+     "t": "Level 1 starts you building around the Queen",
+     "h": "New run opens on LEVEL 1 — THE BURROW GATE. The Queen is already placed for you at the deep spot (you no longer place her). You build the dungeon of zombies/spikes AROUND her."
+    },
+    {
+     "t": "Only ZOMBIE and SPIKES to build",
+     "h": "The build palette should show just two options — ZOMBIE and SPIKES. No doors, no hedges, no separate GRABBER button (grabber now comes from evolving a zombie)."
+    },
+    {
+     "t": "Survive the waves → the Queen opens the doorway",
+     "h": "Clear the level's last wave. You should get a paused 'THE QUEEN OPENS THE WAY' beat, the east exit arch flares purple, your surviving units are refunded as biomass, then the next level begins with a fresh build phase and restored hive HP."
+    },
+    {
+     "t": "You can see where the exit will open",
+     "h": "All level long a faint sealed arch is drawn on the east wall, so you always know which way you're heading before it actually opens."
+    },
+    {
+     "t": "Evolve a ZOMBIE into a GRABBER",
+     "h": "Tap one of your placed zombies → EVOLVE → GRABBER (30◈). It keeps its slow aura and gains a green 'rot' damage-over-time (~2.5/s) on anything inside the aura. A one-time teach banner should explain it on your first zombie."
+    },
+    {
+     "t": "Grabber looks like the SAME art pack",
+     "h": "An evolved grabber should read as the same zombie model but amber-tinted with arms out/grasping (the pack's ROAR pose) — clearly the same art family as the green walking zombie, NOT a mismatched blob."
+    },
+    {
+     "t": "Idle zombies roam, then freeze on prey",
+     "h": "Zombies with nothing to fight should shamble a little (under ~1 tile) around their post. The instant a raider comes into range they should snap still and attack."
+    },
+    {
+     "t": "Story beats PAUSE the game (no overlap)",
+     "h": "Level intros, wave-start beats (THE SCOUTS / PURGE / BUTCHER / etc.) and 'THE QUEEN OPENS THE WAY' should DIM and PAUSE — the raid must NOT spawn until you tap or press Enter to dismiss. Nothing should print over the live action."
+    },
+    {
+     "t": "Small messages ride a slim top ticker",
+     "h": "In-play notices (enemy first-seen, ambush, wave repelled, ability activations, reabsorb refund) should appear as a slim pill docked at the very top rock row — one at a time, no screen dim, never covering the field."
+    },
+    {
+     "t": "The raid plays smart",
+     "h": "The adventurer raid should behave like real players — picking targets, splitting at junctions, fighting back — not just walking a single line into the hive."
+    },
+    {
+     "t": "All 3 levels are completable",
+     "h": "Play through Level 1 → 2 → 3 to the victory screen. NOTE: L2/L3 aren't fully balance-tuned yet, so log where a difficulty spike feels UNFAIR rather than treating a loss as a bug."
+    },
+    {
+     "t": "Nothing basic regressed",
+     "h": "One full run: biomass earns/spends correctly, pause (P) / mute (M) / speed toggle all work, and death → restart is clean."
+    }
    ]
   }
  ]
