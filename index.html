@@ -466,12 +466,45 @@ async function fetchIndex(){
     return await res.json();
   } catch(e){ return []; }
 }
+// --- run merge helpers (PT-B2) -----------------------------------------------
+// A run present on BOTH sides used to be taken wholesale from local, which
+// silently dropped Claude's triage (results[id].claude) that arrived via the
+// cloud. Merge per-result instead: keep the human's verdict AND Claude's state.
+const claudeAt = c => (c && Date.parse(c.at)) || 0;
+function pickClaude(a, b){          // newest .at wins; tie/ missing-at keeps `a`
+  if (!a) return b; if (!b) return a;
+  return claudeAt(b) > claudeAt(a) ? b : a;
+}
+function mergeResults(primary, secondary){
+  const A = primary || {}, B = secondary || {}, out = {};
+  const real = r => r && r.status && r.status !== 'untested';
+  new Set([...Object.keys(A), ...Object.keys(B)]).forEach(k => {
+    const a = A[k], b = B[k];
+    if (!a){ out[k] = b; return; }
+    if (!b){ out[k] = a; return; }
+    const m = { ...b, ...a };                       // primary wins for status/note...
+    if (!real(a) && real(b)){ m.status = b.status; if (b.note) m.note = b.note; }  // ...unless it has no real verdict
+    const c = pickClaude(a.claude, b.claude);
+    if (c) m.claude = c; else delete m.claude;       // never let a claude field vanish
+    out[k] = m;
+  });
+  return out;
+}
+function mergeRun(primary, secondary){
+  const byId = new Map();
+  [...(secondary.bugs||[]), ...(primary.bugs||[])].forEach(x => x && x.id && byId.set(x.id, x));
+  return { ...secondary, ...primary,
+    results: mergeResults(primary.results, secondary.results),
+    bugs: byId.size ? [...byId.values()] : (primary.bugs || secondary.bugs || []),
+    debrief: { ...(secondary.debrief||{}), ...(primary.debrief||{}) } };
+}
 // merge-by-id so a pull never silently drops runs only present in one side
 function mergeGame(local, incoming){
   if (!incoming) return local;
   if (!local) return incoming;
   const byId = new Map();
-  [...(incoming.runs||[]), ...(local.runs||[])].forEach(r => byId.set(r.id, r));
+  (incoming.runs||[]).forEach(r => byId.set(r.id, r));
+  (local.runs||[]).forEach(r => byId.set(r.id, byId.has(r.id) ? mergeRun(r, byId.get(r.id)) : r));
   const runs = [...byId.values()].sort((a,b) => new Date(b.date) - new Date(a.date));
   // merge the feedback inbox the same way (incoming wins on conflict = Claude's triage)
   const inboxById = new Map();
