@@ -20,6 +20,12 @@ Why not fully automatic both ways? A public web page can't safely hold a GitHub 
 token, so it can only *read* from the repo, never *write*. That's why input goes through
 chat. In practice this is actually less work than checking boxes — you just talk.
 
+**Screenshots:** any feedback item or bug can carry screenshots. Take one (Win+Shift+S),
+then Ctrl+V into the capture bar or the bug form — or on any already-submitted item use
+📎 (browse your computer) / 📋 (one-click paste). Each attach also auto-saves a JPEG copy
+to your Downloads folder. Images upload to a Supabase Storage bucket (one-time SQL in
+SUPABASE_SETUP.md); until that bucket exists they're stored inline and still work.
+
 The **backup ▾** menu (Save/Load JSON) is only there if you ever want a file copy. Normal
 use never needs it.
 

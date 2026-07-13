@@ -37,3 +37,29 @@ Claude seeds the table from the git `data/*.json` files on the next chat.
 - To use a separate Supabase project instead, run the SQL there and change
   `SB_URL` / `SB_KEY` at the top of the `<script>` in `index.html`.
 - Git `data/*.json` files remain a backup and the offline fallback.
+
+## Screenshots on feedback (one more table-free step, ~1 min)
+
+Feedback items and bugs can carry screenshots (paste or browse). They upload to a
+public Storage bucket so they sync across devices without bloating the game rows.
+Until the bucket exists the app still works — it just stores the image inside the
+item itself (bigger rows, so run this when you can).
+
+Supabase dashboard (project `liiivtbyyawueboeavmw`) → **SQL Editor** → New query →
+paste → **Run**:
+
+```sql
+insert into storage.buckets (id, name, public)
+values ('playtest-shots', 'playtest-shots', true)
+on conflict (id) do nothing;
+
+create policy "shots public read"  on storage.objects
+  for select using (bucket_id = 'playtest-shots');
+create policy "shots public write" on storage.objects
+  for insert with check (bucket_id = 'playtest-shots');
+```
+
+Notes:
+- Every attach also auto-downloads a JPEG copy to your Downloads folder (that's
+  your local copy, named `<game>-<where>-<timestamp>.jpg`).
+- Images are compressed to max 1400px JPEG before upload, so the bucket stays tiny.

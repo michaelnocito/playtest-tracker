@@ -162,6 +162,17 @@
   #captureBar .capIcon{font-size:18px}
   #captureBar input{flex:1;background:var(--panel);border-color:var(--amber-200)}
   #captureBar select{background:var(--panel);border-color:var(--amber-200)}
+  /* screenshots on feedback items / bugs */
+  #capPending{display:flex;gap:6px;align-items:center}
+  #capPending img{height:34px;border-radius:6px;border:1px solid var(--amber-400);display:block}
+  .shotRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .shotThumb{position:relative}
+  .shotThumb img{height:64px;border-radius:8px;border:1px solid var(--line);cursor:zoom-in;display:block}
+  .shotThumb .shotRm{position:absolute;top:-7px;right:-7px;background:var(--panel);border:1px solid var(--line);
+    border-radius:50%;width:18px;height:18px;line-height:15px;font-size:10px;cursor:pointer;text-align:center}
+  #shotLightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;
+    justify-content:center;z-index:1000;cursor:zoom-out}
+  #shotLightbox img{max-width:92vw;max-height:92vh;border-radius:8px}
   /* sidebar inbox nav */
   .inboxNav{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:10px;
     cursor:pointer;font-weight:600;background:var(--warm-soft);border:1px solid var(--amber-200);
@@ -362,11 +373,107 @@ function ensureGame(name){
 // When Claude logs an action, it updates the item in data/<game>.json. The app
 // displays actions as a timeline in the feedback item view, so Mike sees what
 // Claude did and when.
-function addInbox(gameName, text, tag){
+function addInbox(gameName, text, tag, shots){
   const g = STATE.games[gameName]; if (!g) return;
   if (!g.inbox) g.inbox = [];
-  g.inbox.unshift({ id: uid(), text: text.trim(), tag: tag || 'note', status: 'new', date: new Date().toISOString(), note: '' });
+  g.inbox.unshift({ id: uid(), text: text.trim(), tag: tag || 'note', status: 'new', date: new Date().toISOString(), note: '', shots: shots || [] });
   save();
+}
+
+// ------------------------------------------------------------ screenshots --
+// Any feedback item or bug can carry shots: [{ id, url, at }]. url is a public
+// Supabase Storage URL when the 'playtest-shots' bucket exists (one-time SQL in
+// SUPABASE_SETUP.md); until then it falls back to a compressed inline data URL,
+// so attaching works either way and syncs with the item like any other field.
+// Every attach also auto-downloads a JPEG copy to the computer (Downloads).
+const SB_BUCKET = 'playtest-shots';
+function compressImage(file){ return new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => {
+    const max = 1400, scale = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(img.src);
+    c.toBlob(b => b ? resolve(b) : reject(new Error('encode failed')), 'image/jpeg', 0.8);
+  };
+  img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error('not an image')); };
+  img.src = URL.createObjectURL(file);
+});}
+function blobToDataURL(b){ return new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); }); }
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function makeShot(file, label){
+  const blob = await compressImage(file);
+  const name = `${(STATE.currentGame || 'game').replace(/[^\w-]/g, '')}-${label}-${new Date().toISOString().replace(/[:.]/g, '-')}-${Math.random().toString(36).slice(2, 6)}.jpg`;
+  downloadBlob(blob, name);   // the local copy
+  let url = null;
+  if (sb){
+    try {
+      const { error } = await sb.storage.from(SB_BUCKET).upload(name, blob, { contentType: 'image/jpeg' });
+      if (!error) url = sb.storage.from(SB_BUCKET).getPublicUrl(name).data.publicUrl;
+    } catch(e){}
+  }
+  if (!url) url = await blobToDataURL(blob);   // bucket missing / offline
+  return { id: uid(), url, at: new Date().toISOString() };
+}
+// image files out of a paste event (Ctrl+V) …
+function pasteImages(e){
+  return [...((e.clipboardData && e.clipboardData.items) || [])]
+    .filter(i => i.type.startsWith('image/')).map(i => i.getAsFile()).filter(Boolean);
+}
+// … or straight off the clipboard (the 📋 buttons — one click, no Ctrl+V needed)
+async function clipboardImage(){
+  try {
+    const items = await navigator.clipboard.read();
+    for (const it of items){
+      const t = it.types.find(t => t.startsWith('image/'));
+      if (t) return await it.getType(t);
+    }
+  } catch(e){}
+  return null;
+}
+function browseShot(cb){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+  inp.onchange = async () => { for (const f of inp.files) await cb(f); };
+  inp.click();
+}
+// owner key: 'inbox:<itemId>' or 'bug:<bugId>' — resolves to the live object
+function findShotOwner(owner){
+  const [kind, id] = owner.split(':');
+  const g = currentGame(); if (!g) return null;
+  if (kind === 'inbox') return (g.inbox || []).find(x => x.id === id) || null;
+  if (kind === 'bug'){ const run = currentRun(); return run ? (run.bugs || []).find(x => x.id === id) || null : null; }
+  return null;
+}
+async function attachShot(owner, file){
+  const it = findShotOwner(owner); if (!it) return;
+  setPullStatus('attaching screenshot…');
+  try {
+    const shot = await makeShot(file, owner.split(':')[0]);
+    (it.shots = it.shots || []).push(shot);
+    save(); renderMain(); renderRunList();
+    setPullStatus('screenshot attached ✓ — a copy was also saved to Downloads');
+  } catch(e){ setPullStatus("couldn't read that as an image"); }
+}
+function shotRowHTML(shots, owner){
+  const thumbs = (shots || []).map(s =>
+    `<span class="shotThumb"><img src="${s.url}" data-shot-view="1" title="click to enlarge"><span class="shotRm" data-shot-rm="${owner}:${s.id}" title="remove screenshot">✕</span></span>`).join('');
+  return `<div class="shotRow">${thumbs}
+    <button class="rmBtn" data-shot-add="${owner}" title="attach a screenshot (browse your computer)">📎</button>
+    <button class="rmBtn" data-shot-paste="${owner}" title="paste the screenshot on your clipboard">📋</button>
+  </div>`;
+}
+function viewShot(url){
+  const d = document.createElement('div'); d.id = 'shotLightbox';
+  const img = document.createElement('img'); img.src = url; d.appendChild(img);
+  d.onclick = () => d.remove();
+  document.body.appendChild(d);
 }
 
 // ------------------------------------------------------------ supabase ------
@@ -559,6 +666,17 @@ function currentRun(){
 // ---------------------------------------------------------------- render ----
 let activeTab = 'checklist';
 let mainView = 'run';   // 'run' | 'inbox'
+// screenshots waiting to be added with the next capture / bug (survive re-renders)
+let capShots = [];
+let bugShots = [];
+function renderCapPending(){
+  const el = document.getElementById('capPending'); if (!el) return;
+  el.innerHTML = capShots.map(s => `<img src="${s.url}" title="attached — goes in with the next Add">`).join('');
+}
+function renderBugPending(){
+  const el = document.getElementById('bugPending'); if (!el) return;
+  el.innerHTML = bugShots.map(s => `<img src="${s.url}" style="height:34px;border-radius:6px;border:1px solid var(--amber-400)" title="attached — goes in with Add bug">`).join('');
+}
 let statusFilter = null;   // null=show all | 'pass'|'fail'|'blocked'|'untested'|'retest'
 let stickyId = null;       // a row you're actively cycling stays visible under a filter until you move on
 
@@ -599,6 +717,8 @@ function captureBarHTML(){
       <option value="note" selected>📝 note</option>
     </select>
     <button id="capMic" class="btn-secondary" title="Speak your feedback instead of typing" style="display:${window.webkitSpeechRecognition||window.SpeechRecognition?'inline-flex':'none'}">🎤</button>
+    <span id="capPending"></span>
+    <button id="capShot" class="btn-secondary" title="Attach a screenshot — browse for a file, or just Ctrl+V a copied screenshot into the text box">📎</button>
     <button id="capAdd" class="btn-primary">Add</button>
   </div>`;
 }
@@ -660,6 +780,7 @@ function inboxViewHTML(g){
         <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
       </div>
       <div class="itext">${escapeHtml(it.text)}</div>
+      ${shotRowHTML(it.shots, 'inbox:' + it.id)}
       ${it.note ? `<div class="how">Claude: ${escapeHtml(it.note)}</div>` : ''}
       ${(it.actions && it.actions.length) ? `<div class="actionTimeline">${it.actions.map(a => `<div class="action action-${a.type}"><span class="actionType">${a.type}${a.ref ? ` · ${escapeHtml(a.ref)}` : ''}</span><span class="actionNote">${escapeHtml(a.note)}</span><span class="actionTime">${a.at ? new Date(a.at).toLocaleDateString() : '?'}</span></div>`).join('')}</div>` : ''}
       <div class="triage">
@@ -688,6 +809,7 @@ function inboxViewHTML(g){
         <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
         </div>
         <div class="itext">${escapeHtml(it.text)}</div>
+        ${shotRowHTML(it.shots, 'inbox:' + it.id)}
         ${it.note ? `<div class="how">Claude: ${escapeHtml(it.note)}</div>` : ''}
         ${(it.actions && it.actions.length) ? `<div class="actionTimeline">${it.actions.map(a => `<div class="action action-${a.type}"><span class="actionType">${a.type}${a.ref ? ` · ${escapeHtml(a.ref)}` : ''}</span><span class="actionNote">${escapeHtml(a.note)}</span><span class="actionTime">${a.at ? new Date(a.at).toLocaleDateString() : '?'}</span></div>`).join('')}</div>` : ''}
         <div class="triage">
@@ -712,6 +834,7 @@ function inboxViewHTML(g){
         <button class="rmBtn" data-inbox-rm="${it.id}" title="delete">✕</button>
         </div>
         <div class="itext">${escapeHtml(it.text)}</div>
+        ${shotRowHTML(it.shots, 'inbox:' + it.id)}
         ${(it.actions && it.actions.length) ? `<div class="actionTimeline">${it.actions.map(a => `<div class="action action-${a.type}"><span class="actionType">${a.type}${a.ref ? ` · ${escapeHtml(a.ref)}` : ''}</span><span class="actionNote">${escapeHtml(a.note)}</span><span class="actionTime">${a.at ? new Date(a.at).toLocaleDateString() : '?'}</span></div>`).join('')}</div>` : ''}
       </div>`;
     });
@@ -983,6 +1106,13 @@ function renderMain(){
         <div class="field"><label>Expected</label><textarea id="bugExpected"></textarea></div>
         <div class="field"><label>Actual</label><textarea id="bugActual"></textarea></div>
       </div>
+      <div class="field"><label>Screenshots</label>
+        <div class="shotRow" style="margin-top:0">
+          <span id="bugPending" style="display:flex;gap:6px"></span>
+          <button class="rmBtn" id="bugShotAdd" title="attach a screenshot (browse your computer)">📎</button>
+          <button class="rmBtn" id="bugShotPaste" title="paste the screenshot on your clipboard">📋</button>
+          <span class="hint">or Ctrl+V anywhere in this form</span>
+        </div></div>
       <button id="addBugBtn" class="btn-primary">Add bug</button>
     </div>`;
     run.bugs.forEach(b => {
@@ -994,6 +1124,7 @@ function renderMain(){
         <div><b>Repro:</b><br>${(b.repro||'').replace(/\n/g,'<br>')}</div>
         <div style="margin-top:6px"><b>Expected:</b> ${b.expected||''}</div>
         <div><b>Actual:</b> ${b.actual||''}</div>
+        ${shotRowHTML(b.shots, 'bug:' + b.id)}
       </div>`;
     });
   } else if (activeTab === 'debrief'){
@@ -1051,15 +1182,52 @@ function wireMainEvents(){
   const capInput = document.getElementById('capInput');
   const capAdd = document.getElementById('capAdd');
   const doCapture = () => {
-    if (!capInput || !capInput.value.trim() || !STATE.currentGame) return;
-    addInbox(STATE.currentGame, capInput.value, document.getElementById('capTag').value);
-    capInput.value = '';
+    const text = capInput ? capInput.value.trim() : '';
+    if ((!text && !capShots.length) || !STATE.currentGame) return;
+    addInbox(STATE.currentGame, text || '(screenshot)', document.getElementById('capTag').value, capShots);
+    capShots = [];
+    if (capInput) capInput.value = '';
     if (mainView !== 'inbox'){ setPullStatus('captured ✓'); }
     renderMain(); renderRunList();
     const ci = document.getElementById('capInput'); if (ci) ci.focus();
   };
   if (capAdd) capAdd.onclick = doCapture;
   if (capInput) capInput.onkeydown = e => { if (e.key === 'Enter') doCapture(); };
+
+  // --- screenshots on the capture bar: Ctrl+V into the box, or 📎 to browse.
+  // They wait as thumbnails next to the box and go in with the next Add.
+  renderCapPending();
+  if (capInput) capInput.onpaste = async e => {
+    const imgs = pasteImages(e);
+    if (!imgs.length) return;   // normal text paste — leave it alone
+    e.preventDefault();
+    setPullStatus('reading screenshot…');
+    for (const f of imgs){
+      try { capShots.push(await makeShot(f, 'capture')); } catch(err){}
+    }
+    renderCapPending();
+    setPullStatus('screenshot ready ✓ — it goes in when you hit Add (copy saved to Downloads)');
+  };
+  const capShotBtn = document.getElementById('capShot');
+  if (capShotBtn) capShotBtn.onclick = () => browseShot(async f => {
+    try { capShots.push(await makeShot(f, 'capture')); renderCapPending(); } catch(err){}
+  });
+
+  // --- screenshots on existing feedback items and bugs (📎 browse / 📋 paste) ---
+  document.querySelectorAll('[data-shot-add]').forEach(b => b.onclick = () =>
+    browseShot(f => attachShot(b.dataset.shotAdd, f)));
+  document.querySelectorAll('[data-shot-paste]').forEach(b => b.onclick = async () => {
+    const blob = await clipboardImage();
+    if (!blob){ setPullStatus('no image on the clipboard — take the screenshot first (Win+Shift+S)'); return; }
+    attachShot(b.dataset.shotPaste, blob);
+  });
+  document.querySelectorAll('[data-shot-rm]').forEach(b => b.onclick = () => {
+    const parts = b.dataset.shotRm.split(':');   // kind : ownerId : shotId
+    const it = findShotOwner(parts[0] + ':' + parts[1]); if (!it) return;
+    it.shots = (it.shots || []).filter(s => s.id !== parts[2]);
+    save(); renderMain();
+  });
+  document.querySelectorAll('img[data-shot-view]').forEach(i => i.onclick = () => viewShot(i.src));
 
   // --- mic button: speech-to-text into the capture field (Chrome/Edge only) ---
   const capMic = document.getElementById('capMic');
@@ -1201,9 +1369,31 @@ function wireMainEvents(){
       repro: document.getElementById('bugRepro').value,
       expected: document.getElementById('bugExpected').value,
       actual: document.getElementById('bugActual').value,
+      shots: bugShots,
     });
+    bugShots = [];
     save(); renderMain(); renderRunList();
   };
+  // --- bug form screenshots: 📎 browse, 📋 one-click paste, or Ctrl+V in the form ---
+  const bugForm = document.getElementById('bugForm');
+  if (bugForm){
+    renderBugPending();
+    const addPending = async f => {
+      try { bugShots.push(await makeShot(f, 'bug')); renderBugPending(); } catch(err){}
+    };
+    document.getElementById('bugShotAdd').onclick = () => browseShot(addPending);
+    document.getElementById('bugShotPaste').onclick = async () => {
+      const blob = await clipboardImage();
+      if (!blob){ setPullStatus('no image on the clipboard — take the screenshot first (Win+Shift+S)'); return; }
+      addPending(blob);
+    };
+    bugForm.onpaste = async e => {
+      const imgs = pasteImages(e);
+      if (!imgs.length) return;
+      e.preventDefault();
+      for (const f of imgs) await addPending(f);
+    };
+  }
   document.querySelectorAll('.rmBtn[data-bug]').forEach(b => b.onclick = () => {
     run.bugs = run.bugs.filter(x => x.id !== b.dataset.bug); save(); renderMain(); renderRunList();
   });
