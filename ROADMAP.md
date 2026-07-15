@@ -5,6 +5,39 @@ feedback inbox land here so they survive outside Supabase.
 
 ## Backlog
 
+### PT-B4 — Fluid layout, no manual window-resizing — ✅ SHIPPED 2026-07-15
+*From Mike's feedback:* "Optimize this whole thing so I don't have to do a lot of
+resizing." Reworked the app shell to be responsive so it reads well on a phone /
+second screen and on a wide desktop without touching the browser size:
+- Below **760px** the fixed `280px + 1fr` grid collapses to a single column and
+  the whole page becomes a normal top-to-bottom scroll (`body` height/overflow
+  auto, `#app` height auto + `min-height:100dvh`). The topbar/howstrip/sidebar
+  `grid-column:1/3` spans are collapsed to `1/2` so nothing forces a squished
+  second column; the sidebar stacks above main with a capped, scrollable height.
+- The quick-capture row, `.grid2` bug fields and `.tabs` now wrap / scroll
+  instead of overflowing; `#buildInput` goes fluid; 16px capture input avoids
+  iOS zoom-on-focus. Extra tightening under 460px.
+- Verified at 375px, 760-ish, 1280px and 1600px in both modes: zero horizontal
+  overflow in every case.
+
+### PT-B3 — Quick-capture is the prominent primary experience — ✅ SHIPPED 2026-07-15
+*From Mike's feedback:* the note/bug/feedback capture is what he uses most
+("phone/2nd computer → go to the project → drop a quick note → tell Claude
+'triage' → repeat"), so it should be front-and-centre and the other QA features
+tucked away until called for.
+- **Default view is now quick-capture + inbox** (`mainView` defaults to `inbox`;
+  `renderMain` forces the inbox view whenever full-test mode is off). The capture
+  bar is restyled into a prominent hero card (title + hint + bigger input/Add).
+- **Full-test mode is opt-in** behind a new `🧪 Full test` topbar toggle
+  (persisted in `localStorage['ptt_fulltest']`). Off by default → the QA sidebar
+  (run list), the Start-New-Test build controls (`#runControls`) and the run
+  view (checklist / bugs / debrief) are hidden and the capture + inbox go full
+  width (`#app.mode-capture`). Toggle on → the full workflow returns, capture bar
+  still pinned on top. Nothing was removed; backup/export stays in its menu.
+- Preserved: the game/project switcher, live-sync status, and the untriaged
+  count — now also surfaced as an always-on `N untriaged` badge in the topbar.
+- No changes to the Supabase sync, data model, or SB_* config.
+
 ### PT-B2 — Stop losing Claude's triage state on merge — ✅ SHIPPED 2026-07-09
 A run present on both the local browser and the cloud was merged by taking the
 local copy **wholesale**, which silently dropped `results[id].claude` (the

@@ -156,12 +156,19 @@
   ::-webkit-scrollbar{width:10px;height:10px}
   ::-webkit-scrollbar-thumb{background:var(--stone-300);border-radius:10px;border:2px solid var(--bg)}
   ::-webkit-scrollbar-track{background:transparent}
-  /* quick-capture bar */
-  #captureBar{display:flex;gap:8px;align-items:center;background:var(--warm-soft);
-    border:1px solid var(--amber-200);border-radius:12px;padding:10px 12px;margin-bottom:20px}
-  #captureBar .capIcon{font-size:18px}
-  #captureBar input{flex:1;background:var(--panel);border-color:var(--amber-200)}
-  #captureBar select{background:var(--panel);border-color:var(--amber-200)}
+  /* quick-capture bar — the primary, front-and-centre experience */
+  #captureBar{background:var(--warm-soft);border:1px solid var(--amber-200);border-radius:14px;
+    padding:16px 18px;margin-bottom:22px;box-shadow:var(--shadow)}
+  #captureBar .capHead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  #captureBar .capIcon{font-size:22px;line-height:1}
+  #captureBar .capTitle{font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--clay-700)}
+  #captureBar .capHint{font-size:13px;color:var(--warm)}
+  #captureBar .capRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  #captureBar input{flex:1;min-width:200px;background:var(--panel);border-color:var(--amber-200);
+    font-size:16px;padding:12px 14px}
+  #captureBar select{background:var(--panel);border-color:var(--amber-200);padding:11px 12px}
+  #captureBar #capAdd{padding:12px 26px;font-size:15px;font-weight:600}
+  #captureBar #capMic,#captureBar #capShot{padding:11px 13px}
   /* screenshots on feedback items / bugs */
   #capPending{display:flex;gap:6px;align-items:center}
   #capPending img{height:34px;border-radius:6px;border:1px solid var(--amber-400);display:block}
@@ -209,6 +216,38 @@
   .triage{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   .triage button{font-size:12px;padding:5px 10px;border-radius:8px;color:var(--muted)}
   .triage button:hover{border-color:var(--accent);color:var(--accent)}
+  /* untriaged badge in the topbar (always visible) */
+  #untriagedBadge{background:var(--warm);color:#FFF8F2;border-radius:20px;padding:2px 10px;
+    font-size:12px;font-weight:600;white-space:nowrap}
+  #untriagedBadge.zero{background:var(--sunken);color:var(--subtle)}
+  #fullTestToggle{white-space:nowrap}
+  #fullTestToggle.on{background:var(--accent);color:#FFF8F2;border-color:var(--accent)}
+  /* Capture mode (default): hide the full-QA sidebar, let capture + inbox go full width */
+  #app.mode-capture{grid-template-columns:1fr}
+  #app.mode-capture #sidebar{display:none}
+  #runControls{display:contents}
+  #app.mode-capture #runControls{display:none}
+  /* Responsive: stack to one column so no manual window-resizing is needed.
+     Below ~760px the app becomes a normal top-to-bottom scroll (phone / 2nd screen). */
+  @media (max-width:760px){
+    body{height:auto;overflow:auto}
+    #app{grid-template-columns:1fr;grid-template-rows:auto auto auto 1fr;height:auto;min-height:100dvh}
+    /* collapse the two-column spans so nothing forces a squished 2nd column */
+    #topbar,#howstrip,#sidebar,#main{grid-column:1 / 2}
+    #sidebar{border-right:none;border-bottom:1px solid var(--line);max-height:40vh}
+    #main{padding:16px 14px}
+    #topbar{padding:10px 14px;gap:8px}
+    #buildInput{width:auto;flex:1;min-width:130px}
+    .grid2{grid-template-columns:1fr}
+    .tabs{overflow-x:auto}
+    #captureBar{padding:14px 14px}
+    .summary{gap:6px}
+  }
+  @media (max-width:460px){
+    #topbar h1{font-size:17px;margin-right:6px}
+    #captureBar .capTitle{font-size:16px}
+    #captureBar #capAdd{flex:1}
+  }
 </style>
 </head>
 <body>
@@ -220,10 +259,14 @@
     <button id="manageBtn" title="rename, merge or delete this app">⚙</button>
     <button id="pullBtn" title="Live sync is automatic; this forces an immediate re-sync">⭯ Sync now</button>
     <span id="pullStatus" class="hint" style="margin:0"></span>
-    <span style="width:1px;height:20px;background:var(--line)"></span>
-    <input id="buildInput" placeholder="build / version (e.g. JF-#038)" style="width:200px">
-    <button id="newRunBtn" class="btn-primary">Start New Test</button>
+    <span id="untriagedBadge" class="zero" title="untriaged feedback items — say &quot;triage&quot; to Claude to clear them">0 untriaged</span>
     <span style="flex:1"></span>
+    <button id="fullTestToggle" class="btn-secondary" title="Show the full QA workflow: test runs, checklists, bugs and debrief">🧪 Full test</button>
+    <span id="runControls">
+      <span style="width:1px;height:20px;background:var(--line)"></span>
+      <input id="buildInput" placeholder="build / version (e.g. JF-#038)" style="width:200px">
+      <button id="newRunBtn" class="btn-primary">Start New Test</button>
+    </span>
     <details id="backupMenu" style="position:relative">
       <summary style="list-style:none;cursor:pointer;padding:7px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--muted)">backup ▾</summary>
       <div style="position:absolute;right:0;top:38px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;box-shadow:var(--shadow);z-index:5;display:flex;flex-direction:column;gap:8px;width:210px">
@@ -665,7 +708,11 @@ function currentRun(){
 
 // ---------------------------------------------------------------- render ----
 let activeTab = 'checklist';
-let mainView = 'run';   // 'run' | 'inbox'
+let mainView = 'inbox';   // 'run' | 'inbox' — quick-capture/inbox is the default primary view
+// Full-test mode gates the heavier QA workflow (test runs, checklists, bugs,
+// debrief, the sidebar run list, Start-New-Test). Off by default so opening a
+// project lands you on the prominent quick-capture + inbox. Toggle persists.
+let fullTest = localStorage.getItem('ptt_fulltest') === '1';
 // screenshots waiting to be added with the next capture / bug (survive re-renders)
 let capShots = [];
 let bugShots = [];
@@ -708,18 +755,24 @@ const INBOX_STATUS = { new: 'new', roadmap: 'roadmapped', fixed: 'fixed', dismis
 // never interrupts a play session (the whole point of "jump in and test").
 function captureBarHTML(){
   return `<div id="captureBar">
-    <span class="capIcon">💡</span>
-    <input id="capInput" placeholder="Jump-in feedback: type anything you noticed, then Add..." autocomplete="off" spellcheck="true">
-    <select id="capTag" title="what kind of thing is this?">
-      <option value="bug">🐞 bug</option>
-      <option value="idea">💡 idea</option>
-      <option value="strength">👍 strength — this landed well</option>
-      <option value="note" selected>📝 note</option>
-    </select>
-    <button id="capMic" class="btn-secondary" title="Speak your feedback instead of typing" style="display:${window.webkitSpeechRecognition||window.SpeechRecognition?'inline-flex':'none'}">🎤</button>
-    <span id="capPending"></span>
-    <button id="capShot" class="btn-secondary" title="Attach a screenshot — browse for a file, or just Ctrl+V a copied screenshot into the text box">📎</button>
-    <button id="capAdd" class="btn-primary">Add</button>
+    <div class="capHead">
+      <span class="capIcon">💡</span>
+      <span class="capTitle">Quick capture</span>
+      <span class="capHint">Jot a note, bug, idea or strength while you play — then just tell Claude "triage".</span>
+    </div>
+    <div class="capRow">
+      <input id="capInput" placeholder="Type anything you noticed, then Add..." autocomplete="off" spellcheck="true">
+      <select id="capTag" title="what kind of thing is this?">
+        <option value="bug">🐞 bug</option>
+        <option value="idea">💡 idea</option>
+        <option value="strength">👍 strength — this landed well</option>
+        <option value="note" selected>📝 note</option>
+      </select>
+      <button id="capMic" class="btn-secondary" title="Speak your feedback instead of typing" style="display:${window.webkitSpeechRecognition||window.SpeechRecognition?'inline-flex':'none'}">🎤</button>
+      <span id="capPending"></span>
+      <button id="capShot" class="btn-secondary" title="Attach a screenshot — browse for a file, or just Ctrl+V a copied screenshot into the text box">📎</button>
+      <button id="capAdd" class="btn-primary">Add</button>
+    </div>
   </div>`;
 }
 
@@ -985,7 +1038,8 @@ function renderMain(){
   // the quick-capture bar is always on top, in both the inbox and run views
   let html = captureBarHTML();
 
-  if (mainView === 'inbox'){
+  // In capture mode the inbox is always the view; full-test mode can switch to a run.
+  if (mainView === 'inbox' || !fullTest){
     main.innerHTML = html + inboxViewHTML(g);
     wireMainEvents();
     return;
@@ -1463,7 +1517,26 @@ function wireMainEvents(){
   };
 }
 
-function renderAll(){ renderGameSelect(); renderRunList(); renderMain(); }
+// Reflect the current mode (capture vs full-test) into the shell: hide/show the
+// QA sidebar + run controls, update the toggle label, and keep the always-on
+// untriaged badge current. Called on every render.
+function applyMode(){
+  const app = document.getElementById('app');
+  if (app) app.classList.toggle('mode-capture', !fullTest);
+  const t = document.getElementById('fullTestToggle');
+  if (t){
+    t.classList.toggle('on', fullTest);
+    t.textContent = fullTest ? '← Quick capture' : '🧪 Full test';
+    t.title = fullTest
+      ? 'Hide the QA workflow and go back to quick capture'
+      : 'Show the full QA workflow: test runs, checklists, bugs and debrief';
+  }
+  const g = currentGame();
+  const nNew = g ? (g.inbox || []).filter(i => i.status === 'new').length : 0;
+  const b = document.getElementById('untriagedBadge');
+  if (b){ b.textContent = nNew + ' untriaged'; b.classList.toggle('zero', !nNew); }
+}
+function renderAll(){ renderGameSelect(); renderRunList(); renderMain(); applyMode(); }
 
 // ------------------------------------------------------------------ setup --
 // how-it-works strip: closeable, remembers the choice
@@ -1474,6 +1547,14 @@ document.getElementById('howClose').onclick = () => {
 };
 document.getElementById('gameSel').onchange = e => {
   STATE.currentGame = e.target.value; save(); renderAll();
+};
+// 🧪 Full test toggle: reveal / hide the heavier QA workflow. Quick capture is
+// the default; full test opens the run view (checklists, bugs, debrief, runs).
+document.getElementById('fullTestToggle').onclick = () => {
+  fullTest = !fullTest;
+  localStorage.setItem('ptt_fulltest', fullTest ? '1' : '0');
+  mainView = fullTest ? 'run' : 'inbox';
+  renderAll();
 };
 document.getElementById('newGameBtn').onclick = () => {
   const name = prompt('Game name (e.g. jade-fist):'); if (!name) return;
