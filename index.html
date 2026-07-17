@@ -428,8 +428,11 @@ function addInbox(gameName, text, tag, shots){
 // Supabase Storage URL when the 'playtest-shots' bucket exists (one-time SQL in
 // SUPABASE_SETUP.md); until then it falls back to a compressed inline data URL,
 // so attaching works either way and syncs with the item like any other field.
-// Every attach also auto-downloads a JPEG copy to the computer (Downloads).
+// On a computer every attach also drops a JPEG copy in Downloads.
 const SB_BUCKET = 'playtest-shots';
+// On a phone/tablet an <a download> click IS the browser's save-to-device flow,
+// so the "local copy" would hijack every attach. Desktop only.
+const IS_TOUCH = matchMedia('(pointer: coarse)').matches;
 function compressImage(file){ return new Promise((resolve, reject) => {
   const img = new Image();
   img.onload = () => {
@@ -453,7 +456,7 @@ function downloadBlob(blob, name){
 async function makeShot(file, label){
   const blob = await compressImage(file);
   const name = `${(STATE.currentGame || 'game').replace(/[^\w-]/g, '')}-${label}-${new Date().toISOString().replace(/[:.]/g, '-')}-${Math.random().toString(36).slice(2, 6)}.jpg`;
-  downloadBlob(blob, name);   // the local copy
+  if (!IS_TOUCH) downloadBlob(blob, name);   // the local copy — desktop only
   let url = null;
   if (sb){
     try {
@@ -501,15 +504,15 @@ async function attachShot(owner, file){
     const shot = await makeShot(file, owner.split(':')[0]);
     (it.shots = it.shots || []).push(shot);
     save(); renderMain(); renderRunList();
-    setPullStatus('screenshot attached ✓ — a copy was also saved to Downloads');
+    setPullStatus('screenshot attached ✓' + (IS_TOUCH ? '' : ' — a copy was also saved to Downloads'));
   } catch(e){ setPullStatus("couldn't read that as an image"); }
 }
 function shotRowHTML(shots, owner){
   const thumbs = (shots || []).map(s =>
     `<span class="shotThumb"><img src="${s.url}" data-shot-view="1" title="click to enlarge"><span class="shotRm" data-shot-rm="${owner}:${s.id}" title="remove screenshot">✕</span></span>`).join('');
   return `<div class="shotRow">${thumbs}
-    <button class="rmBtn" data-shot-add="${owner}" title="attach a screenshot (browse your computer)">📎</button>
-    <button class="rmBtn" data-shot-paste="${owner}" title="paste the screenshot on your clipboard">📋</button>
+    <button class="rmBtn" data-shot-add="${owner}" title="${IS_TOUCH ? 'attach a screenshot from your photos' : 'attach a screenshot (browse your computer)'}">📎</button>
+    ${IS_TOUCH ? '' : `<button class="rmBtn" data-shot-paste="${owner}" title="paste the screenshot on your clipboard">📋</button>`}
   </div>`;
 }
 function viewShot(url){
@@ -770,7 +773,7 @@ function captureBarHTML(){
       </select>
       <button id="capMic" class="btn-secondary" title="Speak your feedback instead of typing" style="display:${window.webkitSpeechRecognition||window.SpeechRecognition?'inline-flex':'none'}">🎤</button>
       <span id="capPending"></span>
-      <button id="capShot" class="btn-secondary" title="Attach a screenshot — browse for a file, or just Ctrl+V a copied screenshot into the text box">📎</button>
+      <button id="capShot" class="btn-secondary" title="${IS_TOUCH ? 'Attach a screenshot from your photos' : 'Attach a screenshot — browse for a file, or just Ctrl+V a copied screenshot into the text box'}">📎</button>
       <button id="capAdd" class="btn-primary">Add</button>
     </div>
   </div>`;
@@ -1163,9 +1166,9 @@ function renderMain(){
       <div class="field"><label>Screenshots</label>
         <div class="shotRow" style="margin-top:0">
           <span id="bugPending" style="display:flex;gap:6px"></span>
-          <button class="rmBtn" id="bugShotAdd" title="attach a screenshot (browse your computer)">📎</button>
-          <button class="rmBtn" id="bugShotPaste" title="paste the screenshot on your clipboard">📋</button>
-          <span class="hint">or Ctrl+V anywhere in this form</span>
+          <button class="rmBtn" id="bugShotAdd" title="${IS_TOUCH ? 'attach a screenshot from your photos' : 'attach a screenshot (browse your computer)'}">📎</button>
+          ${IS_TOUCH ? '' : `<button class="rmBtn" id="bugShotPaste" title="paste the screenshot on your clipboard">📋</button>`}
+          <span class="hint">${IS_TOUCH ? 'tap 📎 to pick a screenshot' : 'or Ctrl+V anywhere in this form'}</span>
         </div></div>
       <button id="addBugBtn" class="btn-primary">Add bug</button>
     </div>`;
@@ -1260,7 +1263,7 @@ function wireMainEvents(){
       try { capShots.push(await makeShot(f, 'capture')); } catch(err){}
     }
     renderCapPending();
-    setPullStatus('screenshot ready ✓ — it goes in when you hit Add (copy saved to Downloads)');
+    setPullStatus('screenshot ready ✓ — it goes in when you hit Add' + (IS_TOUCH ? '' : ' (copy saved to Downloads)'));
   };
   const capShotBtn = document.getElementById('capShot');
   if (capShotBtn) capShotBtn.onclick = () => browseShot(async f => {
@@ -1436,7 +1439,8 @@ function wireMainEvents(){
       try { bugShots.push(await makeShot(f, 'bug')); renderBugPending(); } catch(err){}
     };
     document.getElementById('bugShotAdd').onclick = () => browseShot(addPending);
-    document.getElementById('bugShotPaste').onclick = async () => {
+    const bugPasteBtn = document.getElementById('bugShotPaste');   // desktop only
+    if (bugPasteBtn) bugPasteBtn.onclick = async () => {
       const blob = await clipboardImage();
       if (!blob){ setPullStatus('no image on the clipboard — take the screenshot first (Win+Shift+S)'); return; }
       addPending(blob);
